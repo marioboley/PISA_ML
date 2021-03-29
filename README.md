@@ -1,1 +1,1 @@
-# Machine Learning Phase Prediction Models for Polymer-Induced Self Assembly
+# Machine Learning Models for Phase Prediction in Polymer-Induced Self Assembly
