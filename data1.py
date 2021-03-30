@@ -1,9 +1,13 @@
+"""
+Encapsulates access to datafile joined_v1.csv.
+"""
+
 import os
 import pandas as pd
 
-PROJECT_ROOT_DIR = "."
-DATAPATH = os.path.join(PROJECT_ROOT_DIR, "data")
-DATAFILE = os.path.join(DATAPATH, 'rawdata.csv')
+from common import DATAPATH
+
+DATAFILE = os.path.join(DATAPATH, 'joined_v1.csv')
 
 corona_comp = ['corona_GMA',
               'corona_MPC',
@@ -78,6 +82,18 @@ def get_comp_id(x):
         comp_id[key] = prev_comp_id
         id_comp[prev_comp_id] = key
         return prev_comp_id
+
+def comp_descr(group_id):
+    non_zero_elements = list(filter(lambda comp: comp[1]>0, id_comp[group_id]))
+    core_elements_as_string = map(
+        lambda comp: comp[0].lstrip('core_') + (f'({round(comp[1], 3)})' if comp[1] < 1 else ''), 
+        filter(lambda comp: comp[0].startswith('core_'), non_zero_elements))
+    corona_elements_as_string = map(
+        lambda comp: comp[0].lstrip('corona_') + (f'({round(comp[1], 3)})' if comp[1] < 1 else ''),
+        filter(lambda comp: comp[0].startswith('corona_'), non_zero_elements))
+    core_string = '+'.join(core_elements_as_string)
+    corona_string = '+'.join(corona_elements_as_string)
+    return corona_string+'/'+core_string
 
 polymers = pd.read_csv(DATAFILE, index_col=0)
 polymers[targets] = polymers[targets].replace(0, -1)
