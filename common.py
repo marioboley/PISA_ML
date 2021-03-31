@@ -3,6 +3,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import get_scorer as get_sklearn_scorer
 from sklearn.model_selection import train_test_split, GroupKFold
 from pandas import DataFrame, Series
+from pandas.api.types import is_numeric_dtype
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -15,6 +16,12 @@ OUTPUTPATH = os.path.join(PROJECT_ROOT_DIR, "output")
 
 class Evaluator:
     pass
+
+    def applicable_to_test(self):
+        return True
+
+    def applicable_to_train(self):
+        return True
 
 
 class SklearnScoreEvaluator(Evaluator):
@@ -44,6 +51,22 @@ class SampleSize(Evaluator):
 
 sample_size = SampleSize()
 
+class GroupDescription(Evaluator):
+
+    def __init__(self, id_to_description=lambda gid: gid, name=None, apply_to_train=False):
+        self.id_to_description = id_to_description
+        self.name = 'group' if name is None else name
+        self.apply_to_train = apply_to_train
+
+    def __call__(self, est, x, y, groups):
+        return self.id_to_description(groups[0])
+
+    def __str__(self):
+        return self.name
+
+    def applicable_to_train(self):
+        return self.apply_to_train
+
 class Experiment:
     """
     Experiment that fits range of estimators across a number of splits
@@ -72,8 +95,8 @@ class Experiment:
 
         res_cols = ['split', 'estimator']
         for e in self.evaluators:
-            res_cols.append(f'train_{e}')
-            res_cols.append(f'test_{e}')
+            if e.applicable_to_train(): res_cols.append(f'train_{e}')
+            if e.applicable_to_test(): res_cols.append(f'test_{e}')
         self.results_ = DataFrame(columns=res_cols)
         self.fitted_ = {}
         for name in self.estimator_names:
@@ -88,6 +111,8 @@ class Experiment:
 
             x_train, x_test = self.x.iloc[train_idx, :], self.x.iloc[test_idx, :]
             y_train, y_test = self.y.iloc[train_idx], self.y.iloc[test_idx]
+            groups_train, groups_test = (None, None) if self.groups is None else (self.groups[train_idx], self.groups[test_idx])
+
             for j, est in enumerate(self.estimators):
                 name = self.estimator_names[j]
                 if self.verbose > 1:
@@ -101,13 +126,19 @@ class Experiment:
                     'estimator': name,                    
                 }
                 for e in self.evaluators:
-                    train_e = e(_est, x_train, y_train)
-                    conf_results[f'train_{e}'] = train_e
-                    test_e = e(_est, x_test, y_test)
-                    conf_results[f'test_{e}'] = test_e
+                    if e.applicable_to_train():
+                        train_e = e(_est, x_train, y_train, groups_train)
+                        conf_results[f'train_{e}'] = train_e
+                    if e.applicable_to_test():
+                        test_e = e(_est, x_test, y_test, groups_test)
+                        conf_results[f'test_{e}'] = test_e
                     if self.verbose > 1:
-                        print(f'train/test {e}: {train_e:.3f}/{test_e:.3f}')
-                        print()
+                        if e.applicable_to_test() and e.applicable_to_train():
+                            print(f'train/test {e}: {train_e:.3f}/{test_e:.3f}')
+                            print()
+                        elif e.applicable_to_test():
+                            print(f'test {e}: {test_e:.3f}')
+                            print()
                 self.fitted_[name].append(_est)
                 self.results_ = self.results_.append(conf_results, ignore_index=True)
 
@@ -115,11 +146,15 @@ class Experiment:
                 print('*', end='')
         if self.verbose:
             print()
+        self.results_ = self.results_.convert_dtypes()
         return self
 
     def summary(self):
         res_cols = []
-        for e in self.evaluators:
+        num_evals = [e for e in self.evaluators 
+                             if e.applicable_to_train() and is_numeric_dtype(self.results_[f'train_{e}'])
+                             or e.applicable_to_test() and is_numeric_dtype(self.results_[f'test_{e}'])]
+        for e in num_evals:
             res_cols.append(f'mean_train_{e}')
             res_cols.append(f'std_train_{e}')
             res_cols.append(f'mean_test_{e}')
@@ -127,7 +162,7 @@ class Experiment:
         res = DataFrame(columns=res_cols)
         for name in self.estimator_names:
             est_res = {}
-            for e in self.evaluators:
+            for e in num_evals:
                 est_res[f'mean_train_{e}'] = self.results_[self.results_['estimator']==name][f'train_{e}'].mean()
                 est_res[f'std_train_{e}'] = self.results_[self.results_['estimator']==name][f'train_{e}'].std()
                 est_res[f'mean_test_{e}'] = self.results_[self.results_['estimator']==name][f'test_{e}'].mean()
