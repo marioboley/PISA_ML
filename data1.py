@@ -98,8 +98,10 @@ def comp_descr(group_id):
 polymers = pd.read_csv(DATAFILE, index_col=0)
 polymers[targets] = polymers[targets].replace(0, -1)
 comp_ids = polymers.loc[:, corona_comp+core_comp].apply(get_comp_id, axis = 1)
+
 x = pd.get_dummies(polymers.filter(predictors + core_comp + corona_comp, axis=1))
 y = polymers.filter(targets, axis=1)
+
 sphere = polymers['sphere']
 worm = polymers['worm']
 vesicle = polymers['vesicle']
