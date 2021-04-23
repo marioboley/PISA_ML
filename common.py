@@ -109,7 +109,7 @@ class Experiment:
                 print('-------')
                 print()
 
-            x_train, x_test = self.x.iloc[train_idx, :], self.x.iloc[test_idx, :]
+            x_train, x_test = self.x.iloc[train_idx], self.x.iloc[test_idx]
             y_train, y_test = self.y.iloc[train_idx], self.y.iloc[test_idx]
             groups_train, groups_test = (None, None) if self.groups is None else (self.groups[train_idx], self.groups[test_idx])
 
