@@ -41,6 +41,16 @@ class SklearnScoreEvaluator(Evaluator):
         return self.scorer._score_func.__name__.rstrip('_score')
 
 
+class LogLikelihoodEvaluator(Evaluator):
+
+    def __call__(self, est, x, y, groups=None):
+        cond_likelihoods = est.predict_proba(x)[np.arange(len(y)), y]
+        return np.log(cond_likelihoods).mean()
+
+    def __str__(self):
+        return 'log likelihood'
+
+
 class SampleSize(Evaluator):
 
     def __call__(self, est, x, y, groups=None):
