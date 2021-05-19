@@ -106,3 +106,25 @@ sphere = polymers['sphere']
 worm = polymers['worm']
 vesicle = polymers['vesicle']
 other = polymers['other']
+
+from copy import deepcopy
+
+def compute_derived_features(df):
+    df.core_mw_total = df.dp_core*df.mon_core_mw
+    df.core_mv_total = df.dp_core*df.mon_core_mv
+    df.corona_mw_total = df.dp_corona * df.mon_corona_mw
+    df.corona_mv_total = df.dp_corona * df.mon_corona_mv
+    df.ratio_mass = df.corona_mw_total / (df.corona_mw_total + df.core_mw_total)
+    df.ratio_vol = df.corona_mv_total / (df.corona_mv_total + df.core_mv_total)
+    
+def x_grid_data(prototype, xx1, xx2, x1_var='conc', x2_var='dp_core'):
+    """
+    Computes virtual x data by varying a given prototype point accross two variables.
+    """
+    df = pd.DataFrame(columns=x.columns)
+    m, n = xx1.shape
+    df = df.append([deepcopy(prototype) for _ in range(m*n)], ignore_index=True)
+    df[x1_var] = xx1.ravel()
+    df[x2_var] = xx2.ravel()
+    compute_derived_features(df)
+    return df 
