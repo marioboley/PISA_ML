@@ -29,11 +29,22 @@ class ProbabilisticClassifierChain:
         return self
 
     def predict_proba_of(self, x, y):
+        """Predicts probabilities of full binary indicator vectors for each row of 
+        covariate matrix.
+
+        :param x: np.array|pd.DataFrame: matrix of covariates of shape (n, d)
+        :param y: np.array of shape (r, ) or (n, r)
+        :return: np.array of shape (n,) with probabilities of provided target vector value(s)
+        """
         _x = x.copy()
-        res = self.fitted_[0].predict_proba(_x)[:, y[0]]
+        if len(y.shape)==1:
+            y = y.reshape(1, self.r_)
+        idx = np.arange(len(x))
+        res = self.fitted_[0].predict_proba(_x)[idx, y[:, 0]]
         for i in range(1, self.r_):
-            _x = np.column_stack([_x]+[np.ones(len(x))*y[i-1]])
-            res *= self.fitted_[i].predict_proba(_x)[:, y[i]]
+            # TODO: avoid reconstruction of full augmented data matrix if possible in np
+            _x = np.column_stack([_x]+[np.ones(len(x))*y[:, i-1]])
+            res *= self.fitted_[i].predict_proba(_x)[idx, y[:, i]]
         return res
 
     def predict_proba(self, x):
@@ -55,15 +66,6 @@ class ProbabilisticClassifierChain:
         max_ap = np.argmax(np.column_stack([self.predict_proba_of(x, p) for p in self.patterns_]), axis=1)
         return np.array([self.patterns_[max_ap[i]] for i in range(len(max_ap))]) #how to do this directly as np op?
 
-    # def predict_full_proba(self, x):
-    #     res = np.zeros(shape=(len(x),)+self.r_*(2,))
-    #     res[]
-    #     p=[]
-    #     p.append(self.fitted_[0].predict_proba(x)[:, 1])
-    #     for i in range(1, self.r_):
-    #         p1 = (1-p0)*self.fitted_[0].predict_proba(np.column_stack(x, np.zeros(len(x)))) + 
-    #     return res
-
 
 BinaryRelevanceClassifier.predict_proba_sklearn = BinaryRelevanceClassifier.predict_proba
 
@@ -72,3 +74,7 @@ def marg_proba_from_list_of_binary(self, x):
     return np.column_stack([self.predict_proba_sklearn(x)[i][:, 1] for i in range(r)])
 
 BinaryRelevanceClassifier.predict_proba = marg_proba_from_list_of_binary
+
+def predict_proba_of_from_marginals(est, x, y):
+    p = est.predict_proba(x)
+    return np.multiply.reduce(p*y + (1-p)*(1-y), axis=1)

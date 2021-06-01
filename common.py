@@ -7,6 +7,7 @@ from pandas.api.types import is_numeric_dtype
 
 import numpy as np
 from matplotlib import pyplot as plt
+from multilabel import predict_proba_of_from_marginals
 
 import os
 
@@ -47,7 +48,13 @@ class LogLikelihoodEvaluator(Evaluator):
         self.eps = eps
 
     def __call__(self, est, x, y, groups=None):
-        cond_likelihoods = est.predict_proba(x)[np.arange(len(y)), y]
+        if len(y.shape) == 1:
+            cond_likelihoods = est.predict_proba(x)[np.arange(len(y)), y]
+        elif hasattr(est, 'predict_proba_of'):
+            cond_likelihoods = est.predict_proba_of(x, y.values)
+        else:
+            cond_likelihoods = predict_proba_of_from_marginals(est, x, y.values)
+        
         cond_likelihoods = np.clip(cond_likelihoods, self.eps, 1-self.eps)
         if (cond_likelihoods == 0).sum() > 0:
             print('warning: 0 probability has undefined log likelihood')
@@ -68,6 +75,7 @@ class SampleSize(Evaluator):
         return 'size'
 
 sample_size = SampleSize()
+
 
 class GroupDescription(Evaluator):
 
