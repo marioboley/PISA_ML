@@ -44,8 +44,11 @@ class SklearnScoreEvaluator(Evaluator):
 
 class LogLikelihoodEvaluator(Evaluator):
 
-    def __init__(self, eps=1e-15):
+    def __init__(self, base=np.e, neg=False, eps=1e-15):
+        self.base = base
         self.eps = eps
+        self.sign = -1 if neg else 1
+        self.str_rep = 'log loss' if neg else 'log likelihood'
 
     def __call__(self, est, x, y, groups=None):
         if len(y.shape) == 1:
@@ -60,11 +63,11 @@ class LogLikelihoodEvaluator(Evaluator):
             print('warning: 0 probability has undefined log likelihood')
         if (cond_likelihoods == 1).sum() > 0:
             print('warning: 1 probability has undefined log likelihood')
-        return np.log(cond_likelihoods).mean()
+        return self.sign*(np.log(cond_likelihoods)/np.log(self.base)).mean()
 
     def __str__(self):
-        return 'log likelihood'
-
+        return self.str_rep
+        
 
 class SampleSize(Evaluator):
 
