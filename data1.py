@@ -23,7 +23,7 @@ corona_comp = ['corona_GMA',
               'corona_HPMAm',
               'corona_KSPMA',
               'corona_MAcEPyr']
-            #   ,'corona_DSDMA']
+            #   ,'corona_DSDMA'] delete this
 
 core_comp = ['core_BzMA',
              'core_DAAM',
