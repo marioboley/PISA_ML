@@ -7,7 +7,7 @@ import pandas as pd
 
 from common import DATAPATH
 
-DATAFILE = os.path.join(DATAPATH, 'joined_v1.csv')
+DATAFILE = os.path.join(DATAPATH, 'joined_v4.csv')
 
 corona_comp = ['corona_GMA',
               'corona_MPC',
@@ -22,8 +22,8 @@ corona_comp = ['corona_GMA',
               'corona_QDMAEMA',
               'corona_HPMAm',
               'corona_KSPMA',
-              'corona_MAcEPyr',
-              'corona_DSDMA']
+              'corona_MAcEPyr']
+            #   ,'corona_DSDMA']
 
 core_comp = ['core_BzMA',
              'core_DAAM',
