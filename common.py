@@ -1,3 +1,8 @@
+"""
+This module encapsulates file input/output and provides general workflows 
+for cross-validation experiments.
+"""
+
 from sklearn.base import clone
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import get_scorer as get_sklearn_scorer
