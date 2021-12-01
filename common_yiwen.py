@@ -26,8 +26,8 @@ class RuleFitWrapper:
         """
         Input: Cs: C candidates list, orginal Cs is [0.1, 0.5, 1, 2, 4, 8, 16, 32]. To save time, we get rid of 0.1 and 0.5
                n_splits: default is 10 Folder cross validation, if n_splits = n, leave one out cross validation, 
-               We use probabilsitc Classifier and increase number of splits are safety for running.
-               rank: selecting C critera, 'median' or 'mean'
+                        Choose large number of splits are safety for probabiltic classifier in multi-label classification.
+               rank: selecting C criteria, 'median' or 'mean'
         """
         self.cs = Cs
         self.n_splits = n_splits
@@ -78,12 +78,13 @@ class RuleFitWrapper:
         self.model.fit(X,y)
 
     def predict_proba(self, X):
-        """This is only for probability checking.
+        """This is only for predicting probability of p(y=1).
         """
         return self.model.predict_proba(X)
 
     def predict(self, X):
-        """This is for format prediction (0, 1)
+        """This is for converting probability to binary (0, 1)
+        if p>0.5, label=1, otherwise 0
         """
         result = self.predict_proba(X)
         result[result>=0.5] = 1
@@ -91,6 +92,8 @@ class RuleFitWrapper:
         return result
 
     def get_rules(self):
+        """Get positive rules
+        """
         rules = self.rf.get_rules()
         rules = rules[rules['coef'] > 0]
         return rules.iloc[np.argsort(rules['importance'])][::-1]
