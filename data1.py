@@ -5,9 +5,9 @@ Encapsulates access to datafile joined_v1.csv.
 import os
 import pandas as pd
 
-from common import DATAPATH
+from common_yiwen import DATAPATH
 
-DATAFILE = os.path.join(DATAPATH, 'joined_v4.csv')
+DATAFILE = os.path.join(DATAPATH, 'joined_v5.csv')
 
 corona_comp = ['corona_GMA',
               'corona_MPC',
@@ -22,7 +22,8 @@ corona_comp = ['corona_GMA',
               'corona_QDMAEMA',
               'corona_HPMAm',
               'corona_KSPMA',
-              'corona_MAcEPyr']
+              'corona_MAcEPyr',
+              'corona_DSDMA']
 
 core_comp = ['core_BzMA',
              'core_DAAM',
@@ -95,7 +96,8 @@ def comp_descr(group_id):
     return corona_string+'/'+core_string
 
 polymers = pd.read_csv(DATAFILE, index_col=0)
-polymers[targets] = polymers[targets].replace(0, -1)
+polymers = polymers.reset_index(drop=True) # add this line to normalized dataframe
+# polymers[targets] = polymers[targets].replace(0, -1) # Comment this line to not normalize
 comp_ids = polymers.loc[:, corona_comp+core_comp].apply(get_comp_id, axis = 1)
 
 x = pd.get_dummies(polymers.filter(predictors + core_comp + corona_comp, axis=1))
