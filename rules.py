@@ -1,5 +1,7 @@
 from realkd.patch import RuleFit
 from sklearn.model_selection import KFold
+from multilabel import ProbabilisticClassifierChain
+
 
 class RuleFitWrapper:
 
@@ -31,14 +33,17 @@ class RuleFitWrapper:
         for train_index, test_index in kf.split(X):
             X_train, X_test = X.iloc[train_index].values, X.iloc[test_index].values
             y_train, y_test = y.iloc[train_index].values, y.iloc[test_index].values
-            if y.shape[1] != 1:
+            if len(y.shape) == 1 or y.shape[1] == 1:
                 # if multiple targets, use chain rules
-                rulefits = [ProbabilisticClassifierChain(RuleFit(rfmode='classify', model_type='lr', Cs=[C])) for C in self.cs]
+                rulefits = [RuleFit(rfmode='classify', model_type='lr', Cs=[C]) for C in self.cs]
             else:
-                rulefits = [RuleFit(rfmode='classify',tree_generator='GradientBoostingClassifier', model_type='lr', Cs=[C]) for C in self.cs]
+                rulefits = [ProbabilisticClassifierChain(RuleFit(rfmode='classify', model_type='lr', Cs=[C])) for C in self.cs]
             for each in rulefits:
                 each.fit(X_train, y_train)
-                test_error = sum(sum(y_test - each.predict(X_test))**2)/len(X_test)
+                try:
+                    test_error = sum(sum((y_test - each.predict(X_test))**2))/len(X_test)
+                except:
+                    test_error = sum((y_test - each.predict(X_test))**2)/len(X_test)
                 # SSE
                 self.error[i].append(test_error)
             self.rank.append([sorted(self.error[i]).index(l) for l in self.error[i]])
@@ -52,10 +57,10 @@ class RuleFitWrapper:
         lst = list(self.rank)   
         indx = lst.index(min(lst))
         self.rf = RuleFit(rfmode='classify', model_type='lr', Cs=[self.cs[indx]])
-        if y.shape[1] != 1:
-            self.model = ProbabilisticClassifierChain(self.rf)
-        else:
+        if len(y.shape) == 1 or y.shape[1] == 1:
             self.model = self.rf
+        else:
+            self.model = ProbabilisticClassifierChain(self.rf)
         self.model.fit(X,y)
 
     def predict_proba(self, X):
