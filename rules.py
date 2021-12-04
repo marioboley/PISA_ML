@@ -8,7 +8,7 @@ from sklearn.metrics import log_loss
 
 class RuleFitWrapper:
 
-    def __init__(self, Cs = [1, 2, 4, 8, 16, 32], n_splits=10, rank='median'):
+    def __init__(self, Cs = [1, 2, 4, 8, 16, 32], n_splits=10, rank='median', mode='pcc'):
         """
         Input: Cs: C candidates list, orginal Cs is [0.1, 0.5, 1, 2, 4, 8, 16, 32]. To save time, we get rid of 0.1 and 0.5
                n_splits: default is 10 Folder cross validation, if n_splits = n, leave one out cross validation, 
