@@ -35,7 +35,7 @@ class RuleFitWrapper:
         # StrtifiedKFold can not splitted multi-dimensions in y. Not useful in this part. We try KFold cv.
         # In this probabilistic classifier, it is dangerous to have small number of data size. For example, if one observation is not found in training samples, it will raise errors.
         for train_index, test_index in kf.split(X):
-            X_train, X_test = X.iloc[train_index].values, X.iloc[test_index].values
+            X_train, X_test = X.iloc[train_index].values, X.iloc[test_index].values #remove .values
             y_train, y_test = y.iloc[train_index].values, y.iloc[test_index].values
             if len(y.shape) == 1:
                 # if multiple targets, use chain rules
@@ -50,8 +50,11 @@ class RuleFitWrapper:
                 # except:
                 #     test_error = sum((y_test - each.predict(X_test))**2)/len(X_test)
                 each.fit(X_train, y_train)
-                y_pred = each.predict(X_test)
-                test_error = log_loss(y_test, y_pred, eps=1e-15, normalize=True, sample_weight=None, labels=None)
+                if len(y.shape) == 1:
+                    y_pred = each.predict_proba(X_test)[np.arange(len(y_test)), y_test]
+                else:
+                    y_pred = each.predict_proba(X_train)
+                test_error = self.log_loss(y_test, y_pred)
                 self.error[i].append(test_error)
             self.rank.append([sorted(self.error[i]).index(l) for l in self.error[i]])
             i += 1
@@ -120,3 +123,24 @@ class RuleFitWrapper:
             rules['rule'] = rules.apply(lambda x: self.format_rules(sum_columns, x.rule), axis=1)
             res[y_col[i]] = rules
         return res
+
+    def log_loss(self, y_test,y_pred):
+        y_test = y_test.astype(np.float16)
+        y_pred = y_pred.astype(np.float16)
+        if len(y_test.shape) == 1:
+            N = y_test.shape[0]
+            loss = 0
+            for i in range(N):
+                loss -= ((y_test[i]*np.log(y_pred[i]))+((1.0-y_test[i])*np.log(1.0-y_pred[i])))
+                loss = loss/N
+        else:
+            N,M = y_test.shape
+            a=[]
+            for m in range(M):
+                loss=0
+                for i in range(N):
+                    loss -= ((y_test[i,m]*np.log(y_pred[i,m]))+((1.0-y_test[i,m])*np.log(1.0-y_pred[i,m])))
+                loss = loss/N
+                a.append(round(loss,8))
+            loss = np.mean(a)
+        return loss

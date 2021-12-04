@@ -5,7 +5,7 @@ Encapsulates access to datafile joined_v1.csv.
 import os
 import pandas as pd
 
-from common_yiwen import DATAPATH
+from common import DATAPATH
 
 DATAFILE = os.path.join(DATAPATH, 'joined_v5.csv')
 
