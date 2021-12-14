@@ -60,8 +60,7 @@ predictors = ['clogp_corona',
               'ph',
               'salt',
               'charged',
-              'temp',
-              'initiator']
+              'temp'] # remove 
 
 targets = ['sphere',
            'worm',
@@ -95,12 +94,20 @@ def comp_descr(group_id):
     corona_string = '+'.join(corona_elements_as_string)
     return corona_string+'/'+core_string
 
+
+def diff(lst1, lst2):
+    return [each for each in lst1 if each not in lst2]
+
 polymers = pd.read_csv(DATAFILE, index_col=0)
 polymers = polymers.reset_index(drop=True) # add this line to normalized dataframe
 # polymers[targets] = polymers[targets].replace(0, -1) # Comment this line to not normalize
 comp_ids = polymers.loc[:, corona_comp+core_comp].apply(get_comp_id, axis = 1)
 
+selected_columns = diff(polymers.columns, core_comp + corona_comp + targets + ['Publication DOI',
+ 'First author', 'cophases', 'no_assem', 'precipitate', 'initiator'])
 x = pd.get_dummies(polymers.filter(predictors + core_comp + corona_comp, axis=1))
+x1 = pd.get_dummies(polymers.filter(predictors, axis=1))
+x2 = pd.get_dummies(polymers.filter(selected_columns, axis=1))
 y = polymers.filter(targets, axis=1)
 
 sphere = polymers['sphere']
