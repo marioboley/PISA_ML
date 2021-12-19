@@ -109,7 +109,10 @@ class RuleFitWrapper:
         Input: X: features
                y: targets
         """
-        y_col = y.columns.tolist()
+        try:
+            y_col = y.columns.tolist()
+        except:
+            y_col = [y.name]
         sum_columns = X.columns.tolist() + y_col
         res = {}
         if self.chain:
@@ -118,20 +121,21 @@ class RuleFitWrapper:
             rf = [self.rf]
         for i, est in enumerate(rf):
             rules = est.get_rules()
-            rules = rules[rules['coef'] > 0]
-            rules.iloc[np.argsort(rules['importance'])][::-1]
+            rules = rules[rules['coef'] != 0]
+            rules = rules.iloc[np.argsort(rules['importance'])][::-1]
             rules['rule'] = rules.apply(lambda x: self.format_rules(sum_columns, x.rule), axis=1)
+            rules = rules.reset_index(drop=True)
             res[y_col[i]] = rules
         return res
 
-    def log_loss(self, y_test,y_pred):
+    def log_loss(self, y_test, y_pred):
         y_test = y_test.astype(np.float16)
         y_pred = y_pred.astype(np.float16)
         if len(y_test.shape) == 1:
             N = y_test.shape[0]
             loss = 0
             for i in range(N):
-                loss -= ((y_test[i]*np.log(y_pred[i]))+((1.0-y_test[i])*np.log(1.0-y_pred[i])))
+                loss -= ((y_test[i]*np.log2(y_pred[i]))+((1.0-y_test[i])*np.log2(1.0-y_pred[i])))
                 loss = loss/N
         else:
             N,M = y_test.shape
@@ -139,7 +143,7 @@ class RuleFitWrapper:
             for m in range(M):
                 loss=0
                 for i in range(N):
-                    loss -= ((y_test[i,m]*np.log(y_pred[i,m]))+((1.0-y_test[i,m])*np.log(1.0-y_pred[i,m])))
+                    loss -= ((y_test[i,m]*np.log2(y_pred[i,m]))+((1.0-y_test[i,m])*np.log2(1.0-y_pred[i,m])))
                 loss = loss/N
                 a.append(round(loss,8))
             loss = np.mean(a)
