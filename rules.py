@@ -53,7 +53,7 @@ class RuleFitWrapper:
                 if len(y.shape) == 1:
                     y_pred = each.predict_proba(X_test)[np.arange(len(y_test)), y_test]
                 else:
-                    y_pred = each.predict_proba(X_train)
+                    y_pred = each.predict_proba(X_test)
                 test_error = self.log_loss(y_test, y_pred)
                 self.error[i].append(test_error)
             self.rank.append([sorted(self.error[i]).index(l) for l in self.error[i]])
@@ -104,7 +104,7 @@ class RuleFitWrapper:
                 data = re.sub(key, dic_rules[key], data)
         return data
 
-    def get_rules(self, X, y):
+    def get_rules(self, X, y, predictors=None):
         """Get positive rules
         Input: X: features
                y: targets
@@ -113,7 +113,7 @@ class RuleFitWrapper:
             y_col = y.columns.tolist()
         except:
             y_col = [y.name]
-        sum_columns = X.columns.tolist() + y_col
+        sum_columns = predictors + y_col
         res = {}
         if self.chain:
             rf = self.chain.fitted_
