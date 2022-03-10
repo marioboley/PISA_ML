@@ -108,7 +108,7 @@ class Experiment:
     ver 2
     """
 
-    def __init__(self, estimators, estimator_names, splitter, x, y, groups=None, evaluators=['accuracy'], verbose=True):
+    def __init__(self, estimators, estimator_names, splitter, x, y, groups=None, evaluators=['accuracy'], verbose=True, extrapolation_index=None):
         self.x = x
         self.y = y
         self.groups = groups
@@ -120,6 +120,7 @@ class Experiment:
         self.num_reps = self.splitter.get_n_splits(self.x, self.y)
         self.results_ = None
         self.fitted_ = None
+        self.extrapolation_index = extrapolation_index
 
     def run(self):
         if self.verbose:
@@ -136,13 +137,22 @@ class Experiment:
         for name in self.estimator_names:
             self.fitted_[name] = []
         i = -1
-        for train_idx, test_idx in self.splitter.split(self.x, self.y, self.groups):
+        if self.extrapolation_index:
+            new_indx = self.x.drop(self.extrapolation_index, 0).index
+            new_x = self.x.iloc[new_indx]
+            new_y = self.y.iloc[new_indx]
+            new_group = self.groups[new_indx]
+        else:
+            new_x, new_y, new_group = self.x, self.y, self.groups
+
+        for train_idx, test_idx in self.splitter.split(new_x, new_y, new_group):
             i += 1
             if self.verbose > 1:
                 print('Split', i)
                 print('-------')
                 print()
-
+            if self.extrapolation_index:
+                test_idx = self.extrapolation_index
             x_train, x_test = self.x.iloc[train_idx], self.x.iloc[test_idx]
             y_train, y_test = self.y.iloc[train_idx], self.y.iloc[test_idx]
             groups_train, groups_test = (None, None) if self.groups is None else (self.groups[train_idx], self.groups[test_idx])
@@ -161,10 +171,18 @@ class Experiment:
                 }
                 for e in self.evaluators:
                     if e.applicable_to_train():
-                        train_e = e(_est, x_train, y_train, groups_train)
+                        # if self.extrapolation_index:
+                        #     train_e = e(_est, x_train, y_train, None)
+                        # else:
+                            # train_e = e(_est, x_train, y_train, groups_train)
+                        train_e = 1 - np.mean(sum((y_train.values - _est.predict(x_train))**2)/len(y_train.values))
                         conf_results[f'train_{e}'] = train_e
                     if e.applicable_to_test():
-                        test_e = e(_est, x_test, y_test, groups_test)
+                        # if self.extrapolation_index:
+                        #     test_e = e(_est, x_test, y_test, None)
+                        # else:
+                            # test_e = e(_est, x_test, y_test, groups_test)
+                        test_e = 1 - np.mean(sum((y_test.values - _est.predict(x_test))**2)/len(y_test.values))
                         conf_results[f'test_{e}'] = test_e
                     if self.verbose > 1:
                         if e.applicable_to_test() and e.applicable_to_train():
@@ -225,8 +243,8 @@ class Experiment:
 
 class ExtrapolationExperiment(Experiment):
 
-    def __init__(self, estimators, estimator_names, x, y, groups, score=['accuracy', sample_size], verbose=True):
-        Experiment.__init__(self, estimators, estimator_names, GroupKFold(len(set(groups))), x, y, groups, score, verbose)
+    def __init__(self, estimators, estimator_names, x, y, groups, score=['accuracy', sample_size], verbose=True, extrapolation_index=None):
+        Experiment.__init__(self, estimators, estimator_names, GroupKFold(len(set(groups))), x, y, groups, score, verbose, extrapolation_index)
 
 
 if __name__=='__main__':
