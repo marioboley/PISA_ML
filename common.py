@@ -4,7 +4,7 @@ for cross-validation experiments.
 """
 
 from sklearn.base import clone
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, hamming_loss
 from sklearn.metrics import get_scorer as get_sklearn_scorer
 from sklearn.model_selection import train_test_split, GroupKFold
 from pandas import DataFrame, Series
@@ -45,6 +45,18 @@ class SklearnScoreEvaluator(Evaluator):
 
     def __str__(self):
         return self.scorer._score_func.__name__.rstrip('_score')
+
+
+class HammingLoss(Evaluator):
+
+    def __call__(self, est, x, y, groups=None):
+        y_hat = est.predict(x)
+        return np.abs(y - y_hat).mean(axis=1).mean()
+
+    def __str__(self):
+        return 'hamming loss'
+
+hamming_loss = HammingLoss()
 
 
 class LogLikelihoodEvaluator(Evaluator):
