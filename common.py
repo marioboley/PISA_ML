@@ -178,8 +178,10 @@ class Experiment:
                     print(name)
                     print('-'*len(name), flush=True)
                 _est = est() if callable(est) else clone(est, safe=False)
-                _est.fit(x_train, y_train)
-
+                try:
+                    _est.fit(x_train, y_train)
+                except:
+                    continue
                 # add linear models chain l1 zero check:
                 try:
                     if _est.baselearner.penalty == 'l1':
