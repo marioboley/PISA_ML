@@ -75,11 +75,43 @@ class NegLogLikelihoodEvaluator(Evaluator):
         return self.str_rep
     
 class NumberOfNonZeroCoefficients(Evaluator):
-    pass
-
     # call
     # see if estimator has either field coef_ of type array() then return number of non-zero elements
     # or if estimator is hierarchical (like pcc), i.e., there is field 'fitted_' then recursively do the above for all fitted sub-estimators
+
+    def __call__(self, est, x, y, groups=None):
+        num_nonzero_coef = len(x.columns)
+        try: 
+            # pcc version
+            num_nonzero_coef = 0
+            if est.baselearner.penalty == 'l1':
+                num_nonzero_coef = sum([sum(est.fitted_[i].coef_[0] !=0) for i in range(len(y.columns))])
+        except:
+            pass
+
+        try:
+            # single estimator
+            if est.penalty == 'l1':
+                num_nonzero_coef = len([est.coef_[0] == 0])
+        except:
+            pass
+        return num_nonzero_coef
+
+    def __str__(self):
+        return 'num features'
+
+Number_NonZero_Coef = NumberOfNonZeroCoefficients()
+
+class HammingLoss(Evaluator):
+
+    def __call__(self, est, x, y, groups=None):
+        y_hat = est.predict(x)
+        return np.abs(y - y_hat).mean(axis=1).mean()
+
+    def __str__(self):
+        return 'hamming loss'
+
+hamming_loss = HammingLoss()
 
 class SampleSize(Evaluator):
 
@@ -90,7 +122,6 @@ class SampleSize(Evaluator):
         return 'size'
 
 sample_size = SampleSize()
-
 
 class GroupDescription(Evaluator):
 
@@ -115,7 +146,7 @@ class Experiment:
     ver 2
     """
 
-    def __init__(self, estimators, estimator_names, splitter, x, y, groups=None, evaluators=['accuracy'], verbose=True, extrapolation_index=None, min_test_size=None, file_name=None):
+    def __init__(self, estimators, estimator_names, splitter, x, y, groups=None, evaluators=['accuracy'], verbose=True, min_test_size=None):
         self.x = x
         self.y = y
         self.groups = groups
@@ -127,11 +158,7 @@ class Experiment:
         self.num_reps = self.splitter.get_n_splits(self.x, self.y)
         self.results_ = None
         self.fitted_ = None
-        self.extrapolation_index = extrapolation_index
-        self.min_test_size = min_test_size
-        self.file_name = file_name
-        self.multi_l1_result = {'sphere':[], 'vesicle':[], 'worm':[], 'other':[]}
-        self.single_l1_result = []
+        self.min_test_size = None
 
     def run(self):
         if self.verbose:
@@ -148,13 +175,7 @@ class Experiment:
         for name in self.estimator_names:
             self.fitted_[name] = []
         i = -1
-        if self.extrapolation_index:
-            new_indx = self.x.drop(self.extrapolation_index, 0).index
-            new_x = self.x.iloc[new_indx]
-            new_y = self.y.iloc[new_indx]
-            new_group = self.groups[new_indx]
-        else:
-            new_x, new_y, new_group = self.x, self.y, self.groups
+        new_x, new_y, new_group = self.x, self.y, self.groups
 
         for train_idx, test_idx in self.splitter.split(new_x, new_y, new_group):
             i += 1
@@ -162,9 +183,7 @@ class Experiment:
                 print('Split', i)
                 print('-------')
                 print()
-            if self.extrapolation_index: # Self test for particular test sample size
-                test_idx = self.extrapolation_index
-
+           
             if self.min_test_size and self.min_test_size < len(test_idx): # limit the test sample sizes
                 continue
             
@@ -178,30 +197,11 @@ class Experiment:
                     print(name)
                     print('-'*len(name), flush=True)
                 _est = est() if callable(est) else clone(est, safe=False)
-                try:
-                    _est.fit(x_train, y_train)
-                except:
-                    continue
-                # add linear models chain l1 zero check:
-                try:
-                    if _est.baselearner.penalty == 'l1':
-                        for i in range(len(y_train.columns)):
-                            target = y_train.columns[i]
-                            x_features = np.array(x_train.columns)[_est.fitted_[i].coef_[0][:-i] != 0] if i !=0 else np.array(x_train.columns)[_est.fitted_[i].coef_[0] != 0]
-                            self.multi_l1_result[target].append(x_features)
-                except:
-                    pass
-                # add linear models l1 zero check:
-                try:
-                    if _est.baselearner.penalty == 'l1':
-                        x_features = np.array(x_train.columns)[_est.coef_[0] == 0]
-                        self.single_l1_result[target].append(x_features)
-                except:
-                    pass
+                _est.fit(x_train, y_train)
 
                 conf_results = {
                     'split': i,
-                    'estimator': name,                    
+                    'estimator': name                   
                 }
                 for i, e in enumerate(self.evaluators):
                     if e.applicable_to_train():
@@ -219,6 +219,7 @@ class Experiment:
                         elif e.applicable_to_test():
                             print(f'test {e}: {test_e:.3f}')
                             print()
+
                 self.fitted_[name].append(_est)
                 self.results_ = self.results_.append(conf_results, ignore_index=True)
 
