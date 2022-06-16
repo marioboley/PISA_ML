@@ -4,9 +4,9 @@ import numpy as np
 import re
 from sklearn.metrics import log_loss
 
-class RuleFitWrapper:
+class RuleFitWrapperCV:
 
-    def __init__(self, Cs = [1, 2, 4, 8, 16, 32], n_splits=10, rank='median'):
+    def __init__(self, Cs = [1, 2, 4, 8, 16, 32], cv=10, rank='median'):
         """
         Input: Cs: C candidates list, orginal Cs is [0.1, 0.5, 1, 2, 4, 8, 16, 32]. To save time, we get rid of 0.1 and 0.5
                n_splits: default is 10 Folder cross validation, if n_splits = n, leave one out cross validation, 
@@ -14,13 +14,13 @@ class RuleFitWrapper:
                rank: selecting C criteria, 'median' or 'mean'
         """
         self.cs = Cs
-        self.n_splits = n_splits
+        self.n_splits = cv
         self.rank = []
-        self.error = [[] for _ in range(n_splits)]
+        self.error = [[] for _ in range(cv)]
         self.rank_option = rank
         self.model = None
-        self.num_rules = [[] for _ in range(n_splits)]
-        if n_splits < 2: raise Exception ('n_splits should at least 2')
+        self.num_rules = [[] for _ in range(cv)]
+        if cv < 2: raise Exception ('n_splits should at least 2')
         if rank not in ['median', 'mean']: raise Exception ('Invalid ranking method')
 
     def fit(self, x, y):
