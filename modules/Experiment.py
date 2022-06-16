@@ -6,7 +6,7 @@ for cross-validation experiments.
 from sklearn.base import clone
 from sklearn.metrics import accuracy_score, hamming_loss
 from sklearn.metrics import get_scorer as get_sklearn_scorer
-from sklearn.model_selection import train_test_split, GroupKFold
+from sklearn.model_selection import train_test_split, GroupKFold, KFold
 from pandas import DataFrame, Series
 from pandas.api.types import is_numeric_dtype
 
@@ -53,7 +53,7 @@ class HammingLoss(Evaluator):
 hamming_loss = HammingLoss()
 
 
-class LogLikelihoodEvaluator(Evaluator):
+class NegLogLikelihoodEvaluator(Evaluator):
 
     def __init__(self, base=np.e, neg=False, eps=1e-15):
         self.base = base
@@ -78,7 +78,32 @@ class LogLikelihoodEvaluator(Evaluator):
 
     def __str__(self):
         return self.str_rep
-        
+
+class NumberOfNonZeroCoefficients(Evaluator):
+
+    def __call__(self, est, x, y, groups=None):
+        num_nonzero_coef = x.shape[1]
+        try: 
+            # pcc version
+            if est.baselearner.penalty == 'l1':
+                num_nonzero_coef = 0
+                num_nonzero_coef = sum([sum(est.fitted_[i].coef_[0] !=0) for i in range(len(y.columns))])
+        except:
+            pass
+
+        try:
+            # single estimator
+            if est.penalty == 'l1':
+                num_nonzero_coef = len([est.coef_[0] == 0])
+        except:
+            pass
+        return num_nonzero_coef
+
+    def __str__(self):
+        return 'num features'
+
+Number_NonZero_Coef = NumberOfNonZeroCoefficients()
+
 
 class SampleSize(Evaluator):
 

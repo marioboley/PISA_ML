@@ -2,11 +2,13 @@
 Encapsulates access to datafile joined_v1.csv.
 """
 
-import os
 import pandas as pd
+import numpy as np
+import os
 
-from common import DATAPATH
-
+PROJECT_ROOT_DIR = "."
+DATAPATH = os.path.join(PROJECT_ROOT_DIR, "data")
+OUTPUTPATH = os.path.join(PROJECT_ROOT_DIR, "output")
 DATAFILE = os.path.join(DATAPATH, 'joined_v5.csv')
 
 corona_comp = ['corona_GMA',
@@ -22,7 +24,8 @@ corona_comp = ['corona_GMA',
               'corona_QDMAEMA',
               'corona_HPMAm',
               'corona_KSPMA',
-              'corona_MAcEPyr']
+              'corona_MAcEPyr',
+              'corona_DSDMA']
 
 core_comp = ['core_BzMA',
              'core_DAAM',
@@ -59,8 +62,7 @@ predictors = ['clogp_corona',
               'ph',
               'salt',
               'charged',
-              'temp',
-              'initiator']
+              'temp'] 
 
 targets = ['sphere',
            'worm',
@@ -82,6 +84,28 @@ def get_comp_id(x):
         id_comp[prev_comp_id] = key
         return prev_comp_id
 
+# def monomer_pairs(x, core_comp, corona_comp):
+#     for k in range(len(core_comp)):
+#         for j in range(len(corona_comp)):
+#             core, corona = x[core_comp], x[corona_comp]
+#             core, corona = core.astype('float64'), corona.astype('float64')            
+#             current = np.outer(core, corona).round()
+#             if current[k][j]:
+#                 return (core_comp[k], corona_comp[j])
+#     return (None, None)
+
+def get_comp_id(x):
+    global prev_comp_id, comp_id, id_comp
+    # key = tuple(zip(x.index, monomer_pairs(x, core_comp, corona_comp)))
+    key = tuple(zip(x.index, x.values))
+    if key in comp_id:
+        return comp_id[key]
+    else:
+        prev_comp_id += 1
+        comp_id[key] = prev_comp_id
+        id_comp[prev_comp_id] = key
+        return prev_comp_id
+
 def comp_descr(group_id):
     non_zero_elements = list(filter(lambda comp: comp[1]>0, id_comp[group_id]))
     core_elements_as_string = map(
@@ -94,11 +118,20 @@ def comp_descr(group_id):
     corona_string = '+'.join(corona_elements_as_string)
     return corona_string+'/'+core_string
 
+
+def diff(lst1, lst2):
+    return [each for each in lst1 if each not in lst2]
+
 polymers = pd.read_csv(DATAFILE, index_col=0)
-polymers[targets] = polymers[targets].replace(0, -1)
+polymers = polymers.reset_index(drop=True) # add this line to normalized dataframe
+# polymers[targets] = polymers[targets].replace(0, -1) # Comment this line to not normalize
 comp_ids = polymers.loc[:, corona_comp+core_comp].apply(get_comp_id, axis = 1)
 
+selected_columns = diff(polymers.columns, core_comp + corona_comp + targets + ['Publication DOI',
+ 'First author', 'cophases', 'no_assem', 'precipitate', 'initiator'])
 x = pd.get_dummies(polymers.filter(predictors + core_comp + corona_comp, axis=1))
+x1 = pd.get_dummies(polymers.filter(predictors, axis=1))
+x2 = pd.get_dummies(polymers.filter(selected_columns, axis=1))
 y = polymers.filter(targets, axis=1)
 
 sphere = polymers['sphere']
