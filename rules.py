@@ -1,8 +1,6 @@
 from realkd.patch import RuleFit
 from sklearn.model_selection import KFold
-from multilabel import ProbabilisticClassifierChain
 import numpy as np
-from sklearn.base import clone
 import re
 from sklearn.metrics import log_loss
 
@@ -20,13 +18,12 @@ class RuleFitWrapper:
         self.rank = []
         self.error = [[] for _ in range(n_splits)]
         self.rank_option = rank
-        self.chain = None
-        self.rf = None
+        self.model = None
         self.num_rules = [[] for _ in range(n_splits)]
         if n_splits < 2: raise Exception ('n_splits should at least 2')
         if rank not in ['median', 'mean']: raise Exception ('Invalid ranking method')
 
-    def fit(self, X, y):
+    def fit(self, x, y):
         """
         X, y should be dataframe. Apply 2 methods ranking here.
         """
@@ -34,23 +31,18 @@ class RuleFitWrapper:
         kf = KFold(self.n_splits, shuffle=True)
         # StrtifiedKFold can not splitted multi-dimensions in y. Not useful in this part. We try KFold cv.
         # In this probabilistic classifier, it is dangerous to have small number of data size. For example, if one observation is not found in training samples, it will raise errors.
-        for train_index, test_index in kf.split(X):
-            X_train, X_test = X.iloc[train_index].values, X.iloc[test_index].values
-            y_train, y_test = y.iloc[train_index].values, y.iloc[test_index].values
-            if len(y.shape) == 1:
-                # if multiple targets, use chain rules
-                rulefits = [RuleFit(rfmode='classify', model_type='lr', Cs=[C]) for C in self.cs]
-            else:
-                rulefits = [ProbabilisticClassifierChain(RuleFit(rfmode='classify', model_type='lr', Cs=[C])) for C in self.cs]
+        for train_index, test_index in kf.split(x):
+            try:
+                x_train, x_test = x.iloc[train_index], x.iloc[test_index]
+                y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+            except:
+                x_train, x_test = x[train_index], x[test_index]
+                y_train, y_test = y[train_index], y[test_index]
+            rulefits = [RuleFit(rfmode='classify', model_type='lr', Cs=[C]) for C in self.cs]  
+          
             for each in rulefits:
-                # SSE
-                # each.fit(X_train, y_train)
-                # try:
-                #     test_error = sum(sum((y_test - each.predict(X_test))**2))/len(X_test)
-                # except:
-                #     test_error = sum((y_test - each.predict(X_test))**2)/len(X_test)
-                each.fit(X_train, y_train)
-                y_pred = each.predict(X_test)
+                each.fit(x_train, y_train)
+                y_pred = each.predict(x_test)
                 test_error = log_loss(y_test, y_pred, eps=1e-15, normalize=True, sample_weight=None, labels=None)
                 self.error[i].append(test_error)
             self.rank.append([sorted(self.error[i]).index(l) for l in self.error[i]])
@@ -61,34 +53,18 @@ class RuleFitWrapper:
             self.rank = np.mean(np.array(self.rank), axis=0)
         lst = list(self.rank)
         indx = lst.index(min(lst))
-        rf = RuleFit(rfmode='classify', model_type='r', Cs=[self.cs[indx]])
-        if len(y.shape) == 1:
-            # self.chain = rf
-            self.rf = clone(rf)
-            self.rf.fit(X.values, y.values) # change to matrix
-        else:
-            self.chain = ProbabilisticClassifierChain(clone(rf))
-            self.chain.fit(X,y)
+        self.mode = RuleFit(rfmode='classify', model_type='r', Cs=[self.cs[indx]])
         return self
 
-    def predict_proba(self, X):
+    def predict_proba(self, x):
         """This is only for predicting probability of p(y=1).
         """
-        if self.chain:
-            return self.chain.predict_proba(X)
-        return self.rf.predict_proba(X.values)
+        return self.model.predict_proba(x)
 
-    def predict(self, X):
+    def predict(self, x):
         """This is for converting probability to binary (0, 1)
-        if p>0.5, label=1, otherwise 0
         """
-        if self.chain:
-            result = self.predict_proba(X)
-            result[result>=0.5] = 1
-            result[result<0.5] = 0
-        else:
-            result = self.rf.predict(X.values)
-        return result
+        return self.model.predict(x)
 
     def format_rules(self, feature_names, data):
         """This is for format the rule features
@@ -109,10 +85,7 @@ class RuleFitWrapper:
         y_col = y.columns.tolist()
         sum_columns = X.columns.tolist() + y_col
         res = {}
-        if self.chain:
-            rf = self.chain.fitted_
-        else:
-            rf = [self.rf]
+        rf = [self.model]
         for i, est in enumerate(rf):
             rules = est.get_rules()
             rules = rules[rules['coef'] > 0]
