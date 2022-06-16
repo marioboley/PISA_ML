@@ -7,7 +7,7 @@ import pandas as pd
 
 from common import DATAPATH
 
-DATAFILE = os.path.join(DATAPATH, 'joined_v4.csv')
+DATAFILE = os.path.join(DATAPATH, 'joined_v5.csv')
 
 corona_comp = ['corona_GMA',
               'corona_MPC',
