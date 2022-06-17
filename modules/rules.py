@@ -6,7 +6,7 @@ from sklearn.metrics import log_loss
 
 class RuleFitWrapperCV:
 
-    def __init__(self, Cs = [1, 2, 4, 8, 16, 32], cv=10, rank='median'):
+    def __init__(self, Cs = [1, 2, 4, 8, 16, 32], cv=10, rank='median', random_state=None):
         """
         Input: Cs: C candidates list, orginal Cs is [0.1, 0.5, 1, 2, 4, 8, 16, 32]. To save time, we get rid of 0.1 and 0.5
                n_splits: default is 10 Folder cross validation, if n_splits = n, leave one out cross validation, 
@@ -20,6 +20,7 @@ class RuleFitWrapperCV:
         self.rank_option = rank
         self.model = None
         self.num_rules = [[] for _ in range(cv)]
+        self.random_state = random_state
         if cv < 2: raise Exception ('n_splits should at least 2')
         if rank not in ['median', 'mean']: raise Exception ('Invalid ranking method')
 
@@ -28,17 +29,17 @@ class RuleFitWrapperCV:
         X, y should be dataframe. Apply 2 methods ranking here.
         """
         i = 0
-        kf = KFold(self.n_splits, shuffle=True)
+        kf = KFold(self.n_splits, shuffle=True, random_state=self.random_state)
+        try:
+            x, y = x.values, y.yalues
+        except:
+            pass
         # StrtifiedKFold can not splitted multi-dimensions in y. Not useful in this part. We try KFold cv.
         # In this probabilistic classifier, it is dangerous to have small number of data size. For example, if one observation is not found in training samples, it will raise errors.
         for train_index, test_index in kf.split(x):
-            try:
-                x_train, x_test = x.iloc[train_index], x.iloc[test_index]
-                y_train, y_test = y.iloc[train_index], y.iloc[test_index]
-            except:
-                x_train, x_test = x[train_index], x[test_index]
-                y_train, y_test = y[train_index], y[test_index]
-            rulefits = [RuleFit(rfmode='classify', model_type='lr', Cs=[C]) for C in self.cs]  
+            x_train, x_test = x[train_index], x[test_index]
+            y_train, y_test = y[train_index], y[test_index]
+            rulefits = [RuleFit(rfmode='classify', model_type='r', Cs=[C]) for C in self.cs]  
           
             for each in rulefits:
                 each.fit(x_train, y_train)
@@ -53,18 +54,25 @@ class RuleFitWrapperCV:
             self.rank = np.mean(np.array(self.rank), axis=0)
         lst = list(self.rank)
         indx = lst.index(min(lst))
-        self.mode = RuleFit(rfmode='classify', model_type='r', Cs=[self.cs[indx]])
+        self.model = RuleFit(rfmode='classify', model_type='r', Cs=[self.cs[indx]])
+        self.model.fit(x, y)
         return self
 
     def predict_proba(self, x):
         """This is only for predicting probability of p(y=1).
         """
-        return self.model.predict_proba(x)
+        try:
+            return self.model.predict_proba(x.values)
+        except: 
+            return self.model.predict_proba(x)
 
     def predict(self, x):
         """This is for converting probability to binary (0, 1)
         """
-        return self.model.predict(x)
+        try:
+            return self.model.predict_proba(x.values)
+        except: 
+            return self.model.predict_proba(x)
 
     def format_rules(self, feature_names, data):
         """This is for format the rule features

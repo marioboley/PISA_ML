@@ -24,8 +24,8 @@ random_forest_pcc = ProbabilisticClassifierChain(random_forest_base)
 
 
 # rule fit models
-rule_fit_base = RuleFitWrapperCV(Cs = [1, 2, 4, 8, 16, 32], cv=10, rank='median')
-rule_fit_pcc = ProbabilisticClassifierChain(RuleFitWrapperCV)
+rule_fit_base = RuleFitWrapperCV(Cs = [1, 2, 4, 8, 16, 32], cv=5, rank='median', random_state=STATE)
+rule_fit_pcc = ProbabilisticClassifierChain(rule_fit_base)
 
 # Here are the NON-USE models
 linear_non_base = LogisticRegression(penalty='none', max_iter=MAX_ITER)
