@@ -85,16 +85,21 @@ class NumberOfNonZeroCoefficients(Evaluator):
         num_nonzero_coef = x.shape[1]
         try: 
             # pcc version
-            if est.baselearner.penalty == 'l1':
-                num_nonzero_coef = 0
-                num_nonzero_coef = sum([sum(est.fitted_[i].coef_[0] !=0) for i in range(len(y.columns))])
+            if est.baselearner.penalty == 'l1' or est.baselearner.penalty:
+                try:
+                    num_nonzero_coef = np.mean([sum(est.fitted_[i].coef_[0] !=0) for i in range(len(y.columns))])
+                except:
+                    num_nonzero_coef = np.mean([sum(est.fitted_[i].fitted.params !=0) for i in range(len(y.columns))])
         except:
             pass
 
         try:
             # single estimator
-            if est.penalty == 'l1':
-                num_nonzero_coef = len([est.coef_[0] == 0])
+            if est.penalty == 'l1' or est.penalty:
+                try:
+                    num_nonzero_coef = len([est.coef_[0] != 0])
+                except:
+                    num_nonzero_coef = len([est.params != 0])
         except:
             pass
         return num_nonzero_coef
@@ -115,6 +120,16 @@ class SampleSize(Evaluator):
 
 sample_size = SampleSize()
 
+class ErrorEvaluator(Evaluator):
+
+    def __call__(self, _est, x, y, group):
+        e = SklearnScoreEvaluator('accuracy')
+        return 1-  e(_est, x, y, group)
+
+    def __str__(self) -> str:
+        return 'error'
+
+ErrorEvaluator = ErrorEvaluator()
 
 class GroupDescription(Evaluator):
 
