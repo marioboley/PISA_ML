@@ -150,11 +150,12 @@ class GroupDescription(Evaluator):
 class KFoldSpecial(KFold):
     """This algorithm is limiting the upper bond of the testing size.
     """
-    def __init__(self, n_splits=5, size=None, shuffle=False, random_state=None):
-        super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
+    def __init__(self, n_splits=5, size=None, shuffle=True, random_state=None):
+        super().__init__(n_splits, shuffle, random_state)
         self.size = size
     
-    def get_n_splits(self, X=None, y=None, groups=None):
+    def get_n_splits(self, X, y, groups):
+        # KFold(n_splits=self.n_splits, shuffle=self.shuffle, random_state=self.random_state)
         for train, test in super().split(X, y, groups):
             if self.size and len(test) > self.size:
                 self.n_splits -= 1
@@ -182,7 +183,7 @@ class Experiment:
         self.splitter = splitter
         self.evaluators = [e if isinstance(e, Evaluator) else SklearnScoreEvaluator(e) for e in evaluators]
         self.verbose = verbose
-        self.num_reps = self.splitter.get_n_splits(self.x, self.y)
+        self.num_reps = self.splitter.get_n_splits(self.x, self.y, self.groups)
         self.results_ = None
         self.fitted_ = None
         self.testsize = testsize
