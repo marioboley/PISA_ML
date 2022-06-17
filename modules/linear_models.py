@@ -64,7 +64,7 @@ class GlmWrapperCV(GlmWrapper):
             risk = sum(abs(y_test - model.predict(x_test)))
             if bestrisk > risk:
                 self.fitted, bestrisk = model, risk
-        # return self
+        return self
 
 class LogisticWrapperCV(LogisticRegression):
 
