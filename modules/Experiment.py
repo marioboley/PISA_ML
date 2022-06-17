@@ -167,6 +167,26 @@ class KFoldSpecial(KFold):
                 continue
             yield train, test
 
+class GroupKFoldSpecial(GroupKFold):
+    """This algorithm is limiting the upper bond of the testing size.
+    """
+    def __init__(self, n_splits=5, size=None):
+        super().__init__(n_splits)
+        self.size = size
+    
+    def get_n_splits(self, X=None, y=None, groups=None):
+        n_splits = self.n_splits
+        for train, test in super().split(X, y, groups):
+            if self.size and len(test) > self.size:
+                n_splits -= 1
+        return n_splits
+
+    def split(self, X, y=None, groups=None):
+        for train, test in super().split(X, y, groups):
+            if self.size and len(test) > self.size:
+                continue
+            yield train, test
+
 class Experiment:
     """
     Experiment that fits range of estimators across a number of splits
@@ -174,7 +194,7 @@ class Experiment:
     ver 2
     """
 
-    def __init__(self, estimators, estimator_names, splitter, x, y, groups=None, evaluators=['accuracy'], verbose=True, testsize=None):
+    def __init__(self, estimators, estimator_names, splitter, x, y, groups=None, evaluators=['accuracy'], verbose=True):
         self.x = x
         self.y = y
         self.groups = groups
@@ -186,7 +206,6 @@ class Experiment:
         self.num_reps = self.splitter.get_n_splits(self.x, self.y, self.groups)
         self.results_ = None
         self.fitted_ = None
-        self.testsize = testsize
 
     def run(self):
         if self.verbose:
@@ -292,8 +311,8 @@ class Experiment:
 
 class ExtrapolationExperiment(Experiment):
 
-    def __init__(self, estimators, estimator_names, x, y, groups, score=['accuracy', sample_size], verbose=True):
-        Experiment.__init__(self, estimators, estimator_names, GroupKFold(len(set(groups))), x, y, groups, score, verbose)
+    def __init__(self, estimators, estimator_names, splitter, x, y, groups, evaluators=['accuracy', sample_size], verbose=True):
+        Experiment.__init__(self, estimators, estimator_names, splitter, x, y, groups, evaluators, verbose)
 
 
 if __name__=='__main__':
