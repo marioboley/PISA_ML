@@ -55,11 +55,11 @@ hamming_loss = HammingLoss()
 
 class NegLogLikelihoodEvaluator(Evaluator):
 
-    def __init__(self, base=np.e, neg=False, eps=1e-15):
+    def __init__(self, base=np.e, neg=True, eps=1e-15):
         self.base = base
         self.eps = eps
         self.sign = -1 if neg else 1
-        self.str_rep = 'log loss' if neg else 'log likelihood'
+        self.str_rep = 'log loss' if neg else 'Neglog likelihood'
 
     def __call__(self, est, x, y, groups=None):
         if len(y.shape) == 1:
@@ -151,7 +151,7 @@ class KFoldSpecial(KFold):
     """This algorithm is limiting the upper bond of the testing size.
     """
     def __init__(self, n_splits=5, size=None, shuffle=False, random_state=None):
-        super().__init__(n_splits, shuffle, random_state)
+        super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
         self.size = size
     
     def get_n_splits(self, X=None, y=None, groups=None):
