@@ -129,7 +129,7 @@ class ErrorEvaluator(Evaluator):
     def __str__(self) -> str:
         return 'error'
 
-ErrorEvaluator = ErrorEvaluator()
+error = ErrorEvaluator()
 
 class GroupDescription(Evaluator):
 
@@ -147,6 +147,25 @@ class GroupDescription(Evaluator):
     def applicable_to_train(self):
         return self.apply_to_train
 
+class KFoldSpecial(KFold):
+    """This algorithm is limiting the upper bond of the testing size.
+    """
+    def __init__(self, n_splits=5, size=None, shuffle=False, random_state=None):
+        super().__init__(n_splits, shuffle, random_state)
+        self.size = size
+    
+    def get_n_splits(self, X=None, y=None, groups=None):
+        for train, test in super().split(X, y, groups):
+            if self.size and len(test) > self.size:
+                self.n_splits -= 1
+        return self.n_splits
+
+    def split(self, X, y, groups):
+        for train, test in super().split(X, y, groups):
+            if self.size and len(test) > self.size:
+                continue
+            yield train, test
+
 class Experiment:
     """
     Experiment that fits range of estimators across a number of splits
@@ -154,7 +173,7 @@ class Experiment:
     ver 2
     """
 
-    def __init__(self, estimators, estimator_names, splitter, x, y, groups=None, evaluators=['accuracy'], verbose=True):
+    def __init__(self, estimators, estimator_names, splitter, x, y, groups=None, evaluators=['accuracy'], verbose=True, testsize=None):
         self.x = x
         self.y = y
         self.groups = groups
@@ -166,6 +185,7 @@ class Experiment:
         self.num_reps = self.splitter.get_n_splits(self.x, self.y)
         self.results_ = None
         self.fitted_ = None
+        self.testsize = testsize
 
     def run(self):
         if self.verbose:
