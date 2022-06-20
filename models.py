@@ -20,7 +20,7 @@ linear_base = LogisticRegressionCV(penalty='l2', solver='lbfgs', random_state=ST
 linear_pcc = ProbabilisticClassifierChain(linear_base)
 
 # GAM models
-gam_base = GamWrapper(n_splines=20, spline_order=5)
+gam_base = GamWrapper(n_splines=20, spline_order=5, max_iter=MAX_ITER)
 gam_pcc = ProbabilisticClassifierChain(gam_base)
 
 # random forest
