@@ -1,28 +1,44 @@
-import numpy as np
 from pygam import LogisticGAM
+from sklearn.model_selection import GridSearchCV
+import numpy as np
+# import warnings
+# warnings.filterwarnings("ignore")
 
-LogisticGAM.predict_proba_pygam = LogisticGAM.predict_proba
-LogisticGAM.fit_pygam = LogisticGAM.fit
+class GamWrapper(LogisticGAM):
 
-def predict_proba(self, x):
-    p1 = self.predict_proba_pygam(x)
-    p0 = 1 - p1
-    return np.column_stack([p0, p1])
+    def __init__(self, n_splines=20, spline_order=5) -> None:
+        self.n_splines = n_splines
+        self.spline_order = spline_order
+        self.model = None
 
-LogisticGAM.predict_proba = predict_proba
+    def fit(self, X, y):
+        """
+        X, y should be dataframe. Apply 2 methods ranking here.
+        """
+        try:
+            X, y = X.values, y.yalues
+        except:
+            pass
+        lams = np.random.rand(10, X.shape[1])
+        lams = np.exp(lams)
+        parameters = {
+            'lam': [x for x in lams]
+        }
+        # if multiple targets, use first lambda values
+        logistic_gam = LogisticGAM(n_splines=self.n_splines, spline_order=self.spline_order)
+        self.model = GridSearchCV(logistic_gam, parameters, cv=3, iid=False, return_train_score=True, refit=True, scoring='neg_mean_squared_error')
+        self.model.fit(X, y)        
+        return self
 
-def fit(self, x, y):
-    self.classes_ = np.array([0, 1])
-    return self.fit_pygam(x, y)
 
-LogisticGAM.fit = fit
+    # def predict_proba(self, X):
+    #     """This is only for predicting probability of p(y=1).
+    #     """
+    #     return self.model.predict_proba(X.values)
 
-
-# utility function for compiling interaction terms
-# from pygam.terms import TermList, s
-
-# def term_list(df):
-#     terms = TermList()
-#     for i in range(len(df.columns)):
-#         terms += s(i, lam=1.0)
-#     return terms
+    # def predict(self, X):
+    #     """This is for converting probability to binary (0, 1)
+    #     if p>0.5, label=1, otherwise 0
+    #     """
+    #     result = self.model.predict(X.values)
+    #     return result

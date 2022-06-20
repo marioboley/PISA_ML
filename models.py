@@ -8,6 +8,7 @@ from sklearn.multioutput import ClassifierChain
 from modules.multilabel import ProbabilisticClassifierChain
 from modules.rules import RuleFitWrapperCV
 from modules.linear_models import LogisticWrapperCV, GlmWrapper
+from modules.gam import GamWrapper
 import numpy as np
 
 STATE = np.random.RandomState(seed=1000)
@@ -18,10 +19,13 @@ MAX_ITER = 30000
 linear_base = LogisticRegressionCV(penalty='l2', solver='lbfgs', random_state=STATE, max_iter=MAX_ITER)
 linear_pcc = ProbabilisticClassifierChain(linear_base)
 
+# GAM models
+gam_base = GamWrapper(n_splines=20, spline_order=5)
+gam_pcc = ProbabilisticClassifierChain(gam_base)
+
 # random forest
 random_forest_base = RandomForestClassifier(random_state=STATE, min_samples_leaf=1, n_estimators=100)
 random_forest_pcc = ProbabilisticClassifierChain(random_forest_base)
-
 
 # rule fit models
 rule_fit_base = RuleFitWrapperCV(Cs = [1, 2, 4, 8, 16, 32], cv=5, rank='median', random_state=STATE)
