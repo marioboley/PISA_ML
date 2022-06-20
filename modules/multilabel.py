@@ -37,14 +37,11 @@ class ProbabilisticClassifierChain:
         :param y: np.array of shape (r, ) or (n, r)
         :return: np.array of shape (n,) with probabilities of provided target vector value(s)
         """
-        try: x = sm.add_constant(x) if self.baselearner.intercept else x
-        except: pass
         _x = x.copy()
         if len(y.shape)==1:
             y = y.reshape(1, self.r_)
         idx = np.arange(len(x))
-        try: res = self.fitted_[0].predict_proba(_x)[idx, y[:, 0]]
-        except: res = self.fitted_[0].predict_proba(_x) # this modify for gam wrapper
+        res = self.fitted_[0].predict_proba(_x)[idx, y[:, 0]]
             
         for i in range(1, self.r_):
             # TODO: avoid reconstruction of full augmented data matrix if possible in np
@@ -56,8 +53,6 @@ class ProbabilisticClassifierChain:
         return res
 
     def predict_proba(self, x):
-        try: x = sm.add_constant(x) if self.baselearner.intercept else x
-        except: pass
         x = check_array(x)
         res = np.column_stack([np.zeros(len(x), dtype=np.float64) for _ in range(self.r_)])
         for y in self.patterns_:
@@ -68,14 +63,10 @@ class ProbabilisticClassifierChain:
         return res
 
     def predict_full_proba(self, x):
-        try: x = sm.add_constant(x) if self.baselearner.intercept else x
-        except: pass
         x = check_array(x)
         return np.column_stack([self.predict_proba_of(x, p) for p in self.patterns_])
 
     def predict(self, x):
-        try: x = sm.add_constant(x) if self.baselearner.intercept else x
-        except: pass
         x = check_array(x)
         max_ap = np.argmax(np.column_stack([self.predict_proba_of(x, p) for p in self.patterns_]), axis=1)
         return np.array([self.patterns_[max_ap[i]] for i in range(len(max_ap))]) #how to do this directly as np op?
