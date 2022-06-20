@@ -6,10 +6,10 @@ from sklearn.metrics import log_loss
 
 class RuleFitWrapperCV:
 
-    def __init__(self, Cs = [1, 2, 4, 8, 16, 32], cv=10, rank='median', random_state=None):
+    def __init__(self, Cs = [1, 2, 4, 8, 16, 32], cv=5, rank='mean', random_state=None):
         """
         Input: Cs: C candidates list, orginal Cs is [0.1, 0.5, 1, 2, 4, 8, 16, 32]. To save time, we get rid of 0.1 and 0.5
-               n_splits: default is 10 Folder cross validation, if n_splits = n, leave one out cross validation, 
+               n_splits: default is 5 Folder cross validation, if n_splits = n, leave one out cross validation, 
                         Choose large number of splits are safety for probabiltic classifier in multi-label classification.
                rank: selecting C criteria, 'median' or 'mean'
         """
