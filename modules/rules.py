@@ -44,7 +44,7 @@ class RuleFitWrapperCV:
             for each in rulefits:
                 each.fit(x_train, y_train)
                 y_pred = each.predict(x_test)
-                test_error = log_loss(y_test, y_pred, eps=1e-15, normalize=True, sample_weight=None, labels=None)
+                test_error = log_loss(y_test, y_pred, eps=1e-15, normalize=True, sample_weight=None, labels=[1,0])
                 self.error[i].append(test_error)
             self.rank.append([sorted(self.error[i]).index(l) for l in self.error[i]])
             i += 1
