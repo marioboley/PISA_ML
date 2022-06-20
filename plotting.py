@@ -23,3 +23,55 @@ def plot_gam(gam, feature_names, target_name, terms_per_row=5):
             if i % terms_per_row == 0:
                 plt.ylabel('effect on '+ target_name)
             plt.tight_layout()
+
+
+SCATTER_STYLE_NONE = {
+    'color' : 'black', 
+    'label' : 'none', 
+    'marker' : '*'
+}
+
+SCATTER_STYLE_SPHERE = {
+    'facecolors' : 'red',
+    's' : 20,
+    'label' : 'sphere',
+    'marker' : '.'
+}
+
+SCATTER_STYLE_VESICLE = {
+    'facecolor' : 'none', 
+    'edgecolors' : 'green',
+    'label': 'vesicle', 
+    'marker': 'o',
+    's' : 60
+}
+
+SCATTER_STYLE_WORM = {
+    'facecolors' : 'blue', 
+    'label' : 'worm',
+    'marker' : 'x'
+}
+
+SCATTER_STYLE_OTHER = {
+    'edgecolors' : 'black', 
+    'facecolor' : 'None', 
+    'marker' : 's', 
+    'label' : 'other'
+}
+
+def scatter_phases(sample, x, y, none=True, sphere=True, worm=True, vesicle=True, other=True, ax=None):
+    """Plots phases of sample points in a scatter plot such that each phase is a combination of
+    markers of the presence of individual morphologies.
+
+    :param phases: pd.DataFrame of shape (n, l) that contains one phase vector per data point, i.e.,
+                   four columns corresponding to sphere, worm, vesicle, and other
+    :param x: x-coordinates for the scatter plot
+    :param y: y-coordinates for the scatter plot
+    """
+    ax = plt.gca() if ax is None else ax
+    if none and sum(sample.sum(axis=1)==0)>1:
+        ax.scatter(x[sample.sum(axis=1)==0], y[sample.sum(axis=1)==0], **SCATTER_STYLE_NONE)
+    if sphere: ax.scatter(x[sample.sphere==1], y[sample.sphere==1], **SCATTER_STYLE_SPHERE)
+    if worm: ax.scatter(x[sample.worm==1], y[sample.worm==1], **SCATTER_STYLE_WORM)
+    if vesicle: ax.scatter(x[sample.vesicle==1], y[sample.vesicle==1], **SCATTER_STYLE_VESICLE)
+    if other: ax.scatter(x[sample.other==1], y[sample.other==1], **SCATTER_STYLE_OTHER)
