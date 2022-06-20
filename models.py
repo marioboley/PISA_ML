@@ -8,9 +8,11 @@ from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
 from modules.rules import RuleFitWrapperCV
 from modules.linear_models import GlmWrapper
 from modules.gam import GamWrapper
+from interpret.glassbox import ExplainableBoostingClassifier
 import numpy as np
 
-STATE = np.random.RandomState(seed=1000)
+seeds = 1000
+STATE = np.random.RandomState(seed=seeds)
 MAX_ITER = 30000
 
 linear_base = LogisticRegressionCV(penalty='l2', solver='lbfgs', random_state=STATE, max_iter=MAX_ITER)
@@ -22,7 +24,9 @@ random_forest_ind = BinaryRelevanceClassifier(random_forest_base)
 
 # Here are the final models
 # GAM models
-gam_base = GamWrapper(n_splines=20, spline_order=5, max_iter=MAX_ITER)
+# gam_base = GamWrapper(n_splines=20, spline_order=5, max_iter=MAX_ITER) # these gam models are not working
+# gam_pcc = ProbabilisticClassifierChain(gam_base)
+gam_base = ExplainableBoostingClassifier(random_state=seeds) # not support numpy
 gam_pcc = ProbabilisticClassifierChain(gam_base)
 
 # rule fit models

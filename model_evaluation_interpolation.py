@@ -4,8 +4,8 @@ import os
 import pickle
 
 STATE = np.random.RandomState(seed=1000)
-full_estimators = [linear_pcc, rule_fit_pcc, random_forest_pcc]
-full_names = ['Lr_pcc', 'RuFit_pcc', 'RF_pcc']
+full_estimators = [linear_pcc, gam_pcc, rule_fit_pcc, random_forest_pcc]
+full_names = ['Lr_pcc', 'GAM_pcc', 'RuFit_pcc', 'RF_pcc']
 
 interpolation = Experiment(full_estimators, 
                             full_names,
