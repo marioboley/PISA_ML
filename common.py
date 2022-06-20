@@ -5,8 +5,7 @@ sys.path.append('./modules')
 import data1 as data
 from Experiment import * 
 
-STATE = np.random.RandomState(seed=1000)
-kfold = KFold(30, shuffle=True, random_state=STATE)
+
 # x = data.x
 # x1 = data.x1
 # y = data.y
