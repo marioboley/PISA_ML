@@ -2,20 +2,18 @@
 Specifies centrally all models used in this study.
 """
 
-from sklearn.linear_model import LogisticRegressionCV
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.multioutput import ClassifierChain
-from multilabel import ProbabilisticClassifierChain, BinaryRelevanceClassifier
+from modules.multilabel import ProbabilisticClassifierChain
+from sklearn.multioutput import MultiOutputClassifier as BinaryRelevanceClassifier
 
 from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.multioutput import ClassifierChain
 from modules.rules import RuleFitWrapperCV
 from modules.linear_models import GlmWrapper
 from modules.gam import GamWrapper
 import numpy as np
 
 STATE = np.random.RandomState(seed=1000)
+MAX_ITER = 30000
 
 linear_base = LogisticRegressionCV(penalty='l2', solver='lbfgs', random_state=STATE, max_iter=MAX_ITER)
 linear_pcc = ProbabilisticClassifierChain(linear_base) 
@@ -23,8 +21,6 @@ linear_pcc = ProbabilisticClassifierChain(linear_base)
 random_forest_base = RandomForestClassifier(random_state=STATE, min_samples_leaf=1, n_estimators=200)
 random_forest_pcc = ProbabilisticClassifierChain(random_forest_base)
 random_forest_ind = BinaryRelevanceClassifier(random_forest_base)
-
-MAX_ITER = 30000
 
 # Here are the final models
 # GAM models
