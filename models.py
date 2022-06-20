@@ -3,9 +3,7 @@ Specifies centrally all models used in this study.
 """
 
 from sklearn.ensemble import RandomForestClassifier
-from modules.multilabel import ProbabilisticClassifierChain
-from sklearn.multioutput import MultiOutputClassifier as BinaryRelevanceClassifier
-
+from modules.multilabel import ProbabilisticClassifierChain, BinaryRelevanceClassifier
 from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
 from modules.rules import RuleFitWrapperCV
 from modules.linear_models import GlmWrapper

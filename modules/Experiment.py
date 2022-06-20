@@ -12,7 +12,7 @@ from pandas.api.types import is_numeric_dtype
 
 import numpy as np
 from matplotlib import pyplot as plt
-from multilabel import predict_proba_of_from_marginals
+from modules.multilabel import predict_proba_of_from_marginals
 
 class Evaluator:
     pass
