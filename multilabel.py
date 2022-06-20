@@ -29,7 +29,7 @@ class ProbabilisticClassifierChain:
         return self
 
     def predict_proba_of(self, x, y):
-        """Predicts probabilities of full binary indicator vectors for each row of 
+        """Predicts probabilities of full phase binary indicator vectors for each row of 
         covariate matrix.
 
         :param x: np.array|pd.DataFrame: matrix of covariates of shape (n, d)
@@ -65,6 +65,8 @@ class ProbabilisticClassifierChain:
         x = check_array(x)
         max_ap = np.argmax(np.column_stack([self.predict_proba_of(x, p) for p in self.patterns_]), axis=1)
         return np.array([self.patterns_[max_ap[i]] for i in range(len(max_ap))]) #how to do this directly as np op?
+
+    def conditional_entropy(self, x):
 
 
 BinaryRelevanceClassifier.predict_proba_sklearn = BinaryRelevanceClassifier.predict_proba
