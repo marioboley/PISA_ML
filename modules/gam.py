@@ -1,3 +1,4 @@
+# not useful
 from random import random
 from pygam import LogisticGAM
 from sklearn.model_selection import GridSearchCV
