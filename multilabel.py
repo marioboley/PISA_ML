@@ -67,7 +67,7 @@ class ProbabilisticClassifierChain:
         return np.array([self.patterns_[max_ap[i]] for i in range(len(max_ap))]) #how to do this directly as np op?
 
     def conditional_entropy(self, x):
-
+        pass
 
 BinaryRelevanceClassifier.predict_proba_sklearn = BinaryRelevanceClassifier.predict_proba
 
