@@ -25,3 +25,5 @@ class GamWrapper(LogisticGAM):
         self.model = GridSearchCV(logistic_gam, parameters, cv=3, iid=False, return_train_score=True, refit=True, scoring='neg_mean_squared_error')
         self.model.fit(X, y)        
         return self
+
+
