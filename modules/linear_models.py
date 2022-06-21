@@ -1,4 +1,3 @@
-from regex import splititer
 import statsmodels.api as sm
 from copy import deepcopy
 import numpy as np
