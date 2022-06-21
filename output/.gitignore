@@ -1,3 +1,5 @@
 # Ignore all output produced for indiviudal runs
 *
 !.gitignore
+!extrapolation.csv
+!interpolation.csv
