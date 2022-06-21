@@ -13,8 +13,8 @@ import numpy as np
 
 seeds = 1000
 STATE = np.random.RandomState(seed=seeds)
-MAX_ITER = 30000
 
+MAX_ITER = 30000
 linear_base = LogisticRegressionCV(penalty='l2', solver='lbfgs', random_state=STATE, max_iter=MAX_ITER)
 linear_pcc = ProbabilisticClassifierChain(linear_base) 
 

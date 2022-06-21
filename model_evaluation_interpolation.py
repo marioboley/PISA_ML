@@ -1,7 +1,8 @@
 from models import *
-from common import *
 import os
 import pickle
+from modules.experiments import Experiment, KFold, hamming_loss, error, NegLogLikelihoodEvaluator
+from common import data
 
 STATE = np.random.RandomState(seed=1000)
 full_estimators = [linear_pcc, gam_pcc, rule_fit_pcc, random_forest_pcc]

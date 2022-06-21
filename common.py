@@ -3,7 +3,6 @@ import sys
 sys.path.append('./modules')
 
 import data1 as data
-from Experiment import *
 
 # x = data.x
 # x1 = data.x1
