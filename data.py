@@ -1,14 +1,13 @@
 """
-Encapsulates access to datafile joined_v1.csv.
+Encapsulates access to data files.
 """
 
 import pandas as pd
 import numpy as np
 import os
 
-PROJECT_ROOT_DIR = "."
-DATAPATH = os.path.join(PROJECT_ROOT_DIR, "data")
-OUTPUTPATH = os.path.join(PROJECT_ROOT_DIR, "output")
+from common import DATAPATH
+
 DATAFILE = os.path.join(DATAPATH, 'joined_v5.csv')
 
 corona_comp = ['corona_GMA',

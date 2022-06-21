@@ -1,8 +1,13 @@
-import sys
-# sys.path is a list of absolute path strings
-sys.path.append('./modules')
+"""
+This module encapsulates file input/output under the conventation that 
+all code is run from the directory of this module as working directory.
+"""
 
-import data1 as data
+import os
+
+PROJECT_ROOT_DIR = "."
+DATAPATH = os.path.join(PROJECT_ROOT_DIR, "data")
+OUTPUTPATH = os.path.join(PROJECT_ROOT_DIR, "output")
 
 # x = data.x
 # x1 = data.x1

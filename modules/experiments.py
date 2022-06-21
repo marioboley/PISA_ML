@@ -2,6 +2,8 @@
 This module encapsulates file input/output and provides general workflows 
 for cross-validation experiments.
 """
+import numpy as np
+import pandas as pd
 
 from sklearn.base import clone
 from sklearn.metrics import accuracy_score, hamming_loss
@@ -10,7 +12,6 @@ from sklearn.model_selection import train_test_split, GroupKFold, KFold
 from pandas import DataFrame, Series
 from pandas.api.types import is_numeric_dtype
 
-import numpy as np
 from matplotlib import pyplot as plt
 from modules.multilabel import predict_proba_of_from_marginals
 
@@ -260,6 +261,7 @@ class Experiment:
                             print(f'test {e}: {test_e:.3f}')
                             print()
                 self.fitted_[name].append(_est)
+                # self.results_ = pd.concat([self.results_, pd.Series(conf_results)], ignore_index=True)
                 self.results_ = self.results_.append(conf_results, ignore_index=True)
 
             if self.verbose==1:
