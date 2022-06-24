@@ -6,7 +6,7 @@ from sklearn.metrics import log_loss
 
 class RuleFitWrapperCV:
 
-    def __init__(self, Cs = [1, 2, 4, 8, 16, 32], cv=5, rank='mean', random_state=None):
+    def __init__(self, Cs = [1, 2, 4, 8, 16, 32], cv=10, rank='median', random_state=None):
         """
         Input: Cs: C candidates list, orginal Cs is [0.1, 0.5, 1, 2, 4, 8, 16, 32]. To save time, we get rid of 0.1 and 0.5
                n_splits: default is 5 Folder cross validation, if n_splits = n, leave one out cross validation, 
@@ -39,7 +39,7 @@ class RuleFitWrapperCV:
         for train_index, test_index in kf.split(x):
             x_train, x_test = x[train_index], x[test_index]
             y_train, y_test = y[train_index], y[test_index]
-            rulefits = [RuleFit(rfmode='classify', model_type='r', Cs=[C]) for C in self.cs]  
+            rulefits = [RuleFit(rfmode='classify', model_type='lr', Cs=[C]) for C in self.cs]  
           
             for each in rulefits:
                 each.fit(x_train, y_train)
@@ -54,7 +54,7 @@ class RuleFitWrapperCV:
             self.rank = np.mean(np.array(self.rank), axis=0)
         lst = list(self.rank)
         indx = lst.index(min(lst))
-        self.model = RuleFit(rfmode='classify', model_type='r', Cs=[self.cs[indx]])
+        self.model = RuleFit(rfmode='classify', model_type='lr', Cs=[self.cs[indx]])
         self.model.fit(x, y)
         return self
 
