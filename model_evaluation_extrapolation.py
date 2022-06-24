@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 
 import data
+from common import OUTPUTPATH
 from modules.experiments import ExtrapolationExperiment, GroupKFoldSpecial, hamming_loss, GroupDescription, error, NegLogLikelihoodEvaluator
 from models import linear_pcc, gam_pcc, random_forest_pcc, rule_fit_pcc
 
@@ -18,6 +19,7 @@ extrapolation = ExtrapolationExperiment(full_estimators,
                             GroupDescription(data.comp_descr, 'composition')],
                             verbose=True).run()
 
-with open(os.path.join(data.OUTPUTPATH, 'extrapolation.pkl'), 'wb') as f:   
+with open(os.path.join(OUTPUTPATH, 'extrapolation.pkl'), 'wb') as f:   
     pickle.dump(extrapolation, f)
-extrapolation.summary().to_csv(os.path.join(data.OUTPUTPATH, 'extrapolation.csv'))
+extrapolation.summary().to_csv(os.path.join(OUTPUTPATH, 'extrapolation.csv'))
+            
