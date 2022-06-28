@@ -3,6 +3,7 @@ from sklearn.model_selection import KFold
 import numpy as np
 import re
 from sklearn.metrics import log_loss
+from sklearn.utils import check_X_y, check_array
 
 class RuleFitWrapperCV:
 
@@ -30,10 +31,7 @@ class RuleFitWrapperCV:
         """
         i = 0
         kf = KFold(self.n_splits, shuffle=True, random_state=self.random_state)
-        try:
-            x, y = x.values, y.yalues
-        except:
-            pass
+        x, y = check_X_y(x, y)
         # StrtifiedKFold can not splitted multi-dimensions in y. Not useful in this part. We try KFold cv.
         # In this probabilistic classifier, it is dangerous to have small number of data size. For example, if one observation is not found in training samples, it will raise errors.
         for train_index, test_index in kf.split(x):
@@ -61,18 +59,14 @@ class RuleFitWrapperCV:
     def predict_proba(self, x):
         """This is only for predicting probability of p(y=1).
         """
-        try:
-            return self.model.predict_proba(x.values)
-        except: 
-            return self.model.predict_proba(x)
+        x = check_array(x)
+        return self.model.predict_proba(x)
 
     def predict(self, x):
         """This is for converting probability to binary (0, 1)
         """
-        try:
-            return self.model.predict_proba(x.values)
-        except: 
-            return self.model.predict_proba(x)
+        x = check_array(x)
+        return self.model.predict_proba(x)
 
     def format_rules(self, feature_names, data):
         """This is for format the rule features
