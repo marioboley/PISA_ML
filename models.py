@@ -6,8 +6,8 @@ from sklearn.ensemble import RandomForestClassifier
 from modules.multilabel import ProbabilisticClassifierChain, BinaryRelevanceClassifier
 from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
 from modules.rules import RuleFitWrapperCV
+# from realkd.patch import RuleFit
 from modules.linear_models import GlmWrapper
-from modules.gam import GamWrapper
 from interpret.glassbox import ExplainableBoostingClassifier
 import numpy as np
 
@@ -24,17 +24,15 @@ random_forest_ind = BinaryRelevanceClassifier(random_forest_base)
 
 # Here are the final models
 # GAM models
-# gam_base = GamWrapper(n_splines=20, spline_order=5, max_iter=MAX_ITER) # these gam models are not working
-# gam_pcc = ProbabilisticClassifierChain(gam_base)
 gam_base = ExplainableBoostingClassifier(random_state=seeds) # not support numpy
 gam_pcc = ProbabilisticClassifierChain(gam_base)
 
 # rule fit models
+# rule_fit_base = RuleFit(rfmode='classify', model_type='rl', Cs=[1], random_state=seeds)
+# rule_fit_pcc = ProbabilisticClassifierChain(rule_fit_base)
+
 rule_fit_base = RuleFitWrapperCV(Cs = [1, 2, 4, 8, 16, 32], cv=5, rank='median', random_state=STATE)
 rule_fit_pcc = ProbabilisticClassifierChain(rule_fit_base)
-
-rule_fit_base_mean = RuleFitWrapperCV(Cs = [1, 2, 4, 8, 16, 32], cv=5, rank='mean', random_state=STATE)
-rule_fit_pcc_mean = ProbabilisticClassifierChain(rule_fit_base_mean)
 
 # Here are the NON-USE models
 linear_non_base = LogisticRegression(penalty='none', max_iter=MAX_ITER)

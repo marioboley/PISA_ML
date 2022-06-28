@@ -34,12 +34,15 @@ class RuleFitWrapperCV:
             x, y = x.values, y.yalues
         except:
             pass
+        self.model = RuleFit(rfmode='classify', model_type='rl', Cs=[1])
+        self.model.fit(x, y)
+        return self
         # StrtifiedKFold can not splitted multi-dimensions in y. Not useful in this part. We try KFold cv.
         # In this probabilistic classifier, it is dangerous to have small number of data size. For example, if one observation is not found in training samples, it will raise errors.
         for train_index, test_index in kf.split(x):
             x_train, x_test = x[train_index], x[test_index]
             y_train, y_test = y[train_index], y[test_index]
-            rulefits = [RuleFit(rfmode='classify', model_type='lr', Cs=[C]) for C in self.cs]  
+            rulefits = [RuleFit(rfmode='classify', model_type='rl', Cs=[C]) for C in self.cs]  
           
             for each in rulefits:
                 each.fit(x_train, y_train)
