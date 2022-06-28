@@ -41,13 +41,13 @@ class RuleFitWrapperCV:
           
             for each in rulefits:
                 each.fit(x_train, y_train)
-                y_pred = each.predict(x_test)
-                test_error = log_loss(y_test, y_pred, eps=1e-15, normalize=True, sample_weight=None, labels=[1,0])
-                self.error[i].append(test_error)
+                y_pred = each.predict_proba(x_test)
+                test_logloss = log_loss(y_test, y_pred, eps=1e-15, normalize=True, sample_weight=None, labels=[1,0])
+                self.error[i].append(test_logloss)
             self.rank.append([sorted(self.error[i]).index(l) for l in self.error[i]])
             i += 1
         if self.rank_option =='median':
-                self.rank = np.median(np.array(self.rank), axis=0)
+            self.rank = np.median(np.array(self.rank), axis=0)
         else:
             self.rank = np.mean(np.array(self.rank), axis=0)
         lst = list(self.rank)
