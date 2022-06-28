@@ -37,7 +37,7 @@ class RuleFitWrapperCV:
         for train_index, test_index in kf.split(x):
             x_train, x_test = x[train_index], x[test_index]
             y_train, y_test = y[train_index], y[test_index]
-            rulefits = [RuleFit(rfmode='classify', model_type='lr', Cs=[C]) for C in self.cs]  
+            rulefits = [RuleFit(rfmode='classify', model_type='rl', Cs=[C]) for C in self.cs]  
           
             for each in rulefits:
                 each.fit(x_train, y_train)
@@ -52,7 +52,7 @@ class RuleFitWrapperCV:
             self.rank = np.mean(np.array(self.rank), axis=0)
         lst = list(self.rank)
         indx = lst.index(min(lst))
-        self.model = RuleFit(rfmode='classify', model_type='lr', Cs=[self.cs[indx]])
+        self.model = RuleFit(rfmode='classify', model_type='rl', Cs=[self.cs[indx]])
         self.model.fit(x, y)
         return self
 
@@ -66,7 +66,7 @@ class RuleFitWrapperCV:
         """This is for converting probability to binary (0, 1)
         """
         x = check_array(x)
-        return self.model.predict_proba(x)
+        return  self.model.predict(x)
 
     def format_rules(self, feature_names, data):
         """This is for format the rule features
