@@ -1,5 +1,11 @@
+import numpy as np
+
 from matplotlib import pyplot as plt
 from mpl_toolkits import mplot3d
+
+from scipy.stats import entropy
+
+from data import x_grid_data
 
 def plot_gam(gam, feature_names, target_name, terms_per_row=5):
     plt.figure(figsize=(15, 15), dpi=150)
@@ -75,3 +81,83 @@ def scatter_phases(sample, x, y, none=True, sphere=True, worm=True, vesicle=True
     if vesicle: ax.scatter(x[sample.vesicle==1], y[sample.vesicle==1], **SCATTER_STYLE_VESICLE)
     if sphere: ax.scatter(x[sample.sphere==1], y[sample.sphere==1], **SCATTER_STYLE_SPHERE)
     if other: ax.scatter(x[sample.other==1], y[sample.other==1], **SCATTER_STYLE_OTHER)
+
+def plot_morphology_contour(xx1, xx2, probs, col, ax):
+    if probs.max()>=0.5:
+        ax.contourf(xx1, xx2, probs.reshape(xx1.shape), levels=[0.5, 1], colors=col, alpha=0.2, zorder=0.5)
+        if probs.min()<0.5:
+            ax.contour(xx1, xx2, probs.reshape(xx1.shape), levels=[0.5, 1], colors=col, zorder=0.6)
+
+def meshgrid_around_sample(x1, x2, resolution=100, rel_margin = 0.1):
+    x1_width = x1.max()-x1.min()
+    x2_width = x2.max()-x2.min()
+    x1_min = x1.min()-rel_margin*x1_width
+    x1_max = x1.max()+rel_margin*x1_width
+    x2_min = x2.min()-rel_margin*x2_width
+    x2_max = x2.max()+rel_margin*x2_width
+    xx1 = np.linspace(x1_min, x1_max, resolution)
+    xx2 = np.linspace(x2_min, x2_max, resolution)
+    xx1, xx2 = np.meshgrid(xx1, xx2, indexing='xy')
+    return xx1, xx2
+
+def x_grid_data_around_sample(sample, x1_var='conc', x2_var='dp_core', resolution=100, rel_margin = 0.1):
+    """
+    Generates grid of model input points around sample, varying only
+    two variables and setting the rest equal to values in first sample point.
+    """
+    x1 = sample[x1_var]
+    x2 = sample[x2_var]
+    xx1, xx2 = meshgrid_around_sample(x1, x2, resolution=resolution, rel_margin=rel_margin)
+    prototype = sample.iloc[0]
+    return xx1, xx2, x_grid_data(prototype, xx1, xx2)
+
+def plot_marginal_morphology_contours(xx1, xx2, yy_hat, ax=None):
+    ax = plt.gca() if ax is None else ax
+    plot_morphology_contour(xx1, xx2, yy_hat[:, 0], 'red', ax=ax)
+    plot_morphology_contour(xx1, xx2, yy_hat[:, 1], 'blue', ax=ax)
+    plot_morphology_contour(xx1, xx2, yy_hat[:, 2], 'green', ax=ax)
+
+def plot_active_learning_phase_diagrams(exp, k = [0, 1, 4, 7, 10], figsize=None, resolution=100, verbose=True):
+    figsize = (len(k)*12/5, 5.5) if figsize is None else figsize
+    fig, axs = plt.subplots(2, len(k), figsize=figsize, sharex=True, sharey=True, tight_layout=True)
+    xx1, xx2, grid_points = x_grid_data_around_sample(exp.x_test[0], 'conc', 'dp_core', resolution=resolution)
+
+    for j in range(len(k)):
+        if verbose:
+            print('.', end='')
+        yy_hat = exp.fits[k[j]].predict_proba(grid_points)
+        plot_marginal_morphology_contours(xx1, xx2, yy_hat, ax=axs[0, j])
+        scatter_phases(exp.y_test[0], exp.x_test[0]['conc'], exp.x_test[0]['dp_core'], ax=axs[0, j])
+
+        HH = entropy(yy_hat, axis=1).reshape(xx1.shape)
+        entropy_cp = axs[1, j].contourf(xx1, xx2, HH, levels=100, cmap='YlOrBr', vmin=0, vmax=2)
+        # plt.colorbar(entropy_cp, ax=axs[1, j])
+    if verbose:
+        print()
+
+    SCATTER_STYLE_TRAINING = {
+        'marker' : 'D',
+        'facecolor' : 'none',
+        'edgecolor' : 'black',
+        's' : 120,
+        'label' : 'training'
+    }
+
+    for i in range(1, len(k)):
+        axs[0, i].scatter(exp.x_train[k[i]][-k[i]:]['conc'], exp.x_train[k[i]][-k[i]:]['dp_core'], **SCATTER_STYLE_TRAINING)
+        scatter_phases(exp.y_train[k[i]][-k[i]:], exp.x_train[k[i]][-k[i]:]['conc'], exp.x_train[k[i]][-k[i]:]['dp_core'], ax=axs[1, i])
+
+    for j in range(len(k)):
+        axs[1, j].set_xlabel('conc')
+
+    axs[0, 0].set_ylabel('dp_core')
+    axs[1, 0].set_ylabel('dp_core')
+
+    axs[1, 0].scatter([], [], **SCATTER_STYLE_SPHERE)
+    axs[1, 0].scatter([], [], **SCATTER_STYLE_WORM)
+    axs[1, 0].scatter([], [], **SCATTER_STYLE_VESICLE)
+    axs[1, 0].legend()
+
+    sc_tr = axs[0, 0].scatter([], [], **SCATTER_STYLE_TRAINING)
+    axs[0, 0].legend(handles=[sc_tr])
+    return fig, axs
