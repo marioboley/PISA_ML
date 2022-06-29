@@ -32,6 +32,10 @@ class RuleFitWrapperCV:
         i = 0
         kf = KFold(self.n_splits, shuffle=True, random_state=self.random_state)
         x, y = check_X_y(x, y)
+        if len(self.cs) == 1:
+            self.model = RuleFit(rfmode='classify', model_type='rl', Cs=self.cs)
+            self.model.fit(x, y)
+            return self
         # StrtifiedKFold can not splitted multi-dimensions in y. Not useful in this part. We try KFold cv.
         # In this probabilistic classifier, it is dangerous to have small number of data size. For example, if one observation is not found in training samples, it will raise errors.
         for train_index, test_index in kf.split(x):
@@ -68,30 +72,35 @@ class RuleFitWrapperCV:
         x = check_array(x)
         return  self.model.predict(x)
 
-    def format_rules(self, feature_names, data):
+    def format_rules(self, feature_names, data, types='rule'):
         """This is for format the rule features
         Input: feature_names: feature names
-               data: dataframe
+                data: dataframe
         """
         dic_rules = dict(zip(['feature_' + str(i) + ' ' for i in range(len(feature_names))], feature_names))
         for key in dic_rules:
-            if re.match(r'(.*?)' + key, data):
-                data = re.sub(key, dic_rules[key], data)
+            if types == 'rule':
+                if re.findall(r'(' + key +')', data):
+                    data = re.sub(key, dic_rules[key], data)
+                temp_data = data.split()
+                for i in range(len(temp_data)):
+                    try: temp_data[i] = str(round(float(temp_data[i]),4))
+                    except: pass
+                data = " ".join(temp_data)
+            else:
+                if key[:-1] == data:
+                    data = dic_rules[key]
         return data
 
-    def get_rules(self, X, y):
+    def get_rules(self, columns):
         """Get positive rules
         Input: X: features
                y: targets
         """
-        y_col = y.columns.tolist()
-        sum_columns = X.columns.tolist() + y_col
-        res = {}
-        rf = [self.model]
-        for i, est in enumerate(rf):
-            rules = est.get_rules()
-            rules = rules[rules['coef'] > 0]
-            rules.iloc[np.argsort(rules['importance'])][::-1]
-            rules['rule'] = rules.apply(lambda x: self.format_rules(sum_columns, x.rule), axis=1)
-            res[y_col[i]] = rules
-        return res
+        rules = self.model.get_rules()
+        rules = rules[rules['importance'] != 0]
+        rules = rules.iloc[np.argsort(rules['importance'])][::-1]
+        rules['rule'] = rules.apply(lambda x: self.format_rules(columns, x.rule, x.type), axis=1)
+        return rules
+
+        
