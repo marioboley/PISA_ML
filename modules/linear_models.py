@@ -2,7 +2,6 @@ import statsmodels.api as sm
 from copy import deepcopy
 import numpy as np
 from sklearn.model_selection import KFold
-import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
 class GlmWrapper:
