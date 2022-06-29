@@ -1,8 +1,9 @@
 """
-This module encapsulates file input/output and provides general workflows 
-for cross-validation experiments.
+This module provides general workflows for cross-validation 
+and active learning experiments.
 """
 import numpy as np
+import pandas as pd
 
 from sklearn.base import clone
 from sklearn.metrics import accuracy_score, hamming_loss
@@ -10,9 +11,59 @@ from sklearn.metrics import get_scorer as get_sklearn_scorer
 from sklearn.model_selection import train_test_split, GroupKFold, KFold
 from pandas import DataFrame, Series
 from pandas.api.types import is_numeric_dtype
+from scipy.stats import entropy
 
 from matplotlib import pyplot as plt
 from modules.multilabel import predict_proba_of_from_marginals
+
+
+class ActiveLearningExperiment:
+    """
+    Refits a model by iteratively augmenting training set from initial test set.
+    Chooses point with maximum entropy of predictive distribution according to
+    current model.
+
+    NOTE: assumes model to be probabilistic classifier chain,
+    """
+
+    def __init__(self, est, x_train, x_test, y_train, y_test, k, verbose=1):
+        self.estimator = est
+        self.fits = []
+        self.x_train = [x_train]
+        self.x_test = [x_test]
+        self.y_train = [y_train]
+        self.y_test = [y_test]
+        self.k = k # how many points to request
+        self.verbose = verbose
+
+    def _augment_train(self, i):
+        self.x_train.append(pd.concat((self.x_train[-1], self.x_test[-1].iloc[i:i+1])))
+        self.y_train.append(pd.concat((self.y_train[-1] ,self.y_test[-1].iloc[i: i+1])))
+        self.x_test.append(self.x_test[-1].drop(self.x_test[-1].index[i]))
+        self.y_test.append(self.y_test[-1].drop(self.y_test[-1].index[i]))
+
+    def _fit(self):
+        est = clone(self.estimator, safe=False)
+        est.fit(self.x_train[-1], self.y_train[-1])
+        self.fits.append(est)
+
+    def run(self):
+        if self.verbose > 1:
+            print('initial fit')
+        self._fit()
+        while len(self.fits)<self.k+1:
+            H = entropy(self.fits[-1].predict_full_proba(self.x_test[-1]), axis=1)
+            max_entropy_idx = np.argmax(H)
+            if self.verbose == 1:
+                print('.', end='')
+            elif self.verbose > 1:
+                print('acquiring point', max_entropy_idx, self.x_test[-1].iloc[max_entropy_idx]['conc'], self.x_test[-1].iloc[max_entropy_idx]['dp_core'])
+            self._augment_train(max_entropy_idx)
+            self._fit()
+        if self.verbose == 1:
+            print()
+        return self
+
 
 class Evaluator:
     pass
