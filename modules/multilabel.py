@@ -3,7 +3,6 @@ import numpy as np
 from sklearn.base import clone
 from sklearn.multioutput import MultiOutputClassifier as BinaryRelevanceClassifier
 from sklearn.utils import check_X_y, check_array
-import statsmodels.api as sm
 
 from itertools import product
 
