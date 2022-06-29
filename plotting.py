@@ -71,7 +71,7 @@ def scatter_phases(sample, x, y, none=True, sphere=True, worm=True, vesicle=True
     ax = plt.gca() if ax is None else ax
     if none and sum(sample.sum(axis=1)==0)>1:
         ax.scatter(x[sample.sum(axis=1)==0], y[sample.sum(axis=1)==0], **SCATTER_STYLE_NONE)
-    if sphere: ax.scatter(x[sample.sphere==1], y[sample.sphere==1], **SCATTER_STYLE_SPHERE)
     if worm: ax.scatter(x[sample.worm==1], y[sample.worm==1], **SCATTER_STYLE_WORM)
     if vesicle: ax.scatter(x[sample.vesicle==1], y[sample.vesicle==1], **SCATTER_STYLE_VESICLE)
+    if sphere: ax.scatter(x[sample.sphere==1], y[sample.sphere==1], **SCATTER_STYLE_SPHERE)
     if other: ax.scatter(x[sample.other==1], y[sample.other==1], **SCATTER_STYLE_OTHER)
