@@ -117,6 +117,15 @@ def plot_marginal_morphology_contours(xx1, xx2, yy_hat, ax=None):
     plot_morphology_contour(xx1, xx2, yy_hat[:, 1], 'blue', ax=ax)
     plot_morphology_contour(xx1, xx2, yy_hat[:, 2], 'green', ax=ax)
 
+
+SCATTER_STYLE_TRAINING = {
+    'marker' : 'D',
+    'facecolor' : 'none',
+    'edgecolor' : 'black',
+    's' : 120,
+    'label' : 'training'
+}
+
 def plot_active_learning_phase_diagrams(exp, k = [0, 1, 4, 7, 10], figsize=None, resolution=100, verbose=True):
     figsize = (len(k)*12/5, 5.5) if figsize is None else figsize
     fig, axs = plt.subplots(2, len(k), figsize=figsize, sharex=True, sharey=True, tight_layout=True)
@@ -135,19 +144,12 @@ def plot_active_learning_phase_diagrams(exp, k = [0, 1, 4, 7, 10], figsize=None,
     if verbose:
         print()
 
-    SCATTER_STYLE_TRAINING = {
-        'marker' : 'D',
-        'facecolor' : 'none',
-        'edgecolor' : 'black',
-        's' : 120,
-        'label' : 'training'
-    }
-
     for i in range(1, len(k)):
         axs[0, i].scatter(exp.x_train[k[i]][-k[i]:]['conc'], exp.x_train[k[i]][-k[i]:]['dp_core'], **SCATTER_STYLE_TRAINING)
         scatter_phases(exp.y_train[k[i]][-k[i]:], exp.x_train[k[i]][-k[i]:]['conc'], exp.x_train[k[i]][-k[i]:]['dp_core'], ax=axs[1, i])
 
     for j in range(len(k)):
+        axs[0, j].set_title(f'$m={k[j]}$ (err ${exp.results_.iloc[k[j]]["full_test_error"]: .2f}$)')
         axs[1, j].set_xlabel('conc')
 
     axs[0, 0].set_ylabel('dp_core')

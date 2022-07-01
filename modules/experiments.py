@@ -17,54 +17,6 @@ from matplotlib import pyplot as plt
 from modules.multilabel import predict_proba_of_from_marginals
 
 
-class ActiveLearningExperiment:
-    """
-    Refits a model by iteratively augmenting training set from initial test set.
-    Chooses point with maximum entropy of predictive distribution according to
-    current model.
-
-    NOTE: assumes model to be probabilistic classifier chain,
-    """
-
-    def __init__(self, est, x_train, x_test, y_train, y_test, k, verbose=1):
-        self.estimator = est
-        self.fits = []
-        self.x_train = [x_train]
-        self.x_test = [x_test]
-        self.y_train = [y_train]
-        self.y_test = [y_test]
-        self.k = k # how many points to request
-        self.verbose = verbose
-
-    def _augment_train(self, i):
-        self.x_train.append(pd.concat((self.x_train[-1], self.x_test[-1].iloc[i:i+1])))
-        self.y_train.append(pd.concat((self.y_train[-1] ,self.y_test[-1].iloc[i: i+1])))
-        self.x_test.append(self.x_test[-1].drop(self.x_test[-1].index[i]))
-        self.y_test.append(self.y_test[-1].drop(self.y_test[-1].index[i]))
-
-    def _fit(self):
-        est = clone(self.estimator, safe=False)
-        est.fit(self.x_train[-1], self.y_train[-1])
-        self.fits.append(est)
-
-    def run(self):
-        if self.verbose > 1:
-            print('initial fit')
-        self._fit()
-        while len(self.fits)<self.k+1:
-            H = entropy(self.fits[-1].predict_full_proba(self.x_test[-1]), axis=1)
-            max_entropy_idx = np.argmax(H)
-            if self.verbose == 1:
-                print('.', end='')
-            elif self.verbose > 1:
-                print('acquiring point', max_entropy_idx, self.x_test[-1].iloc[max_entropy_idx]['conc'], self.x_test[-1].iloc[max_entropy_idx]['dp_core'])
-            self._augment_train(max_entropy_idx)
-            self._fit()
-        if self.verbose == 1:
-            print()
-        return self
-
-
 class Evaluator:
     pass
 
@@ -173,9 +125,9 @@ sample_size = SampleSize()
 
 class ErrorEvaluator(Evaluator):
 
-    def __call__(self, _est, x, y, group):
+    def __call__(self, _est, x, y, groups=None):
         e = SklearnScoreEvaluator('accuracy')
-        return 1-  e(_est, x, y, group)
+        return 1 - e(_est, x, y, groups)
 
     def __str__(self) -> str:
         return 'error'
@@ -365,6 +317,79 @@ class ExtrapolationExperiment(Experiment):
 
     def __init__(self, estimators, estimator_names, splitter, x, y, groups, evaluators=['accuracy', sample_size], verbose=True):
         Experiment.__init__(self, estimators, estimator_names, splitter, x, y, groups, evaluators, verbose)
+
+
+class ActiveLearningExperiment:
+    """
+    Refits an estimator by iteratively augmenting training set from initial test set.
+    Chooses point with maximum entropy of predictive distribution according to
+    current model.
+
+    NOTE: assumes model to be probabilistic classifier chain,
+    """
+
+    def __init__(self, est, x_train, x_test, y_train, y_test, k, evaluators=[error], verbose=1):
+        self.estimator = est
+        self.fits = []
+        self.x_train = [x_train]
+        self.x_test = [x_test]
+        self.y_train = [y_train]
+        self.y_test = [y_test]
+        self.k = k # how many points to request
+        self.evaluators = [e if isinstance(e, Evaluator) else SklearnScoreEvaluator(e) for e in evaluators]
+        self.verbose = verbose
+        self.results_ = None
+
+    def _augment_train(self, i):
+        self.x_train.append(pd.concat((self.x_train[-1], self.x_test[-1].iloc[i:i+1])))
+        self.y_train.append(pd.concat((self.y_train[-1] ,self.y_test[-1].iloc[i: i+1])))
+        self.x_test.append(self.x_test[-1].drop(self.x_test[-1].index[i]))
+        self.y_test.append(self.y_test[-1].drop(self.y_test[-1].index[i]))
+
+    def _fit(self):
+        est = clone(self.estimator, safe=False)
+        est.fit(self.x_train[-1], self.y_train[-1])
+        self.fits.append(est)
+
+    def _evaluate(self):
+        result = {'round': len(self.fits)-1}
+        for e in self.evaluators:
+            if e.applicable_to_train():
+                train_e = e(self.fits[-1], self.x_train[-1], self.y_train[-1])
+                result[f'train_{e}'] = train_e
+            if e.applicable_to_test():
+                test_e = e(self.fits[-1], self.x_test[-1], self.y_test[-1])
+                result[f'test_{e}'] = test_e
+                test_e = e(self.fits[-1], self.x_test[0], self.y_test[0])
+                result[f'full_test_{e}'] = test_e
+        self.results_=pd.concat((self.results_, pd.DataFrame([result])), ignore_index=True, axis=0)
+
+    def run(self):
+        res_cols = ['round']
+        for e in self.evaluators:
+            if e.applicable_to_train(): res_cols.append(f'train_{e}')
+            if e.applicable_to_test(): res_cols.append(f'test_{e}')
+        self.results_ = DataFrame(columns=res_cols)
+        self.fitted_ = {}
+
+        if self.verbose > 1:
+            print('initial fit')
+        self._fit()
+        self._evaluate()
+        while len(self.fits)<self.k+1:
+            H = entropy(self.fits[-1].predict_full_proba(self.x_test[-1]), axis=1)
+            max_entropy_idx = np.argmax(H)
+            if self.verbose == 1:
+                print('.', end='')
+            elif self.verbose > 1:
+                print('acquiring point', max_entropy_idx, self.x_test[-1].iloc[max_entropy_idx]['conc'], self.x_test[-1].iloc[max_entropy_idx]['dp_core'])
+            self._augment_train(max_entropy_idx)
+            self._fit()
+            self._evaluate()
+            
+        if self.verbose == 1:
+            print()
+        return self
 
 
 if __name__=='__main__':
