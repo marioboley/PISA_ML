@@ -1,5 +1,6 @@
 import numpy as np
 
+from sklearn.inspection import plot_partial_dependence
 from matplotlib import pyplot as plt
 from mpl_toolkits import mplot3d
 
@@ -163,3 +164,43 @@ def plot_active_learning_phase_diagrams(exp, k = [0, 1, 4, 7, 10], figsize=None,
     sc_tr = axs[0, 0].scatter([], [], **SCATTER_STYLE_TRAINING)
     axs[0, 0].legend(handles=[sc_tr])
     return fig, axs
+
+def plot_model_individual_partial_dependency(est, X, features, num_importance, ax=None, n_jobs=12):
+    ax = plt.gca() if ax is None else ax
+    common_params = {
+        "n_jobs": n_jobs,
+    }
+    plot_partial_dependence(est, 
+                            features=features[:num_importance], 
+                            X=X,
+                            ax=ax,
+                            kind = 'average',
+                            **common_params)
+
+def estimator_feature_importance(est, X):
+    feature_importance = np.array(est.feature_importances_)
+    sorted_idx = feature_importance.argsort()
+    sorted_feature = list(X.columns[sorted_idx])[::-1]
+    importance_scores = feature_importance[sorted_idx][::-1]
+    return sorted_feature, importance_scores
+
+def plot_model_partial_dependency(est, X, num_importance, nrow=3, figsize=(12, 12), sharey='row', n_jobs=12):
+    fig, axs = plt.subplots(ncols=num_importance, nrows=nrow, figsize=figsize, sharey=sharey, tight_layout=True)
+    for j in range(3):
+        col_indx = -4 + j
+        sorted_feature, importance_scores = estimator_feature_importance(est[j], X)
+        plot_model_individual_partial_dependency(est = est[j],
+                                                X=X.iloc[:, :col_indx],
+                                                features=sorted_feature,
+                                                num_importance = num_importance,
+                                                ax=axs[j, :],
+                                                n_jobs = n_jobs)
+        for i in range(num_importance):
+            text = sorted_feature[i] + ': ' + str(round(importance_scores[i], 4))
+            axs[j, i].text(0.5, 0.95, text, horizontalalignment='center', verticalalignment='center', transform=axs[j, i].transAxes)
+            axs[j, i].set_xlabel(None)
+            axs[j, i].set_ylabel(None)
+    axs[0,0].set_ylabel('Sphere')
+    axs[1,0].set_ylabel('Worm')
+    axs[2,0].set_ylabel('Vesicle')
+    fig.supxlabel(r'$X_i$')
