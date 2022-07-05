@@ -1,6 +1,6 @@
 import numpy as np
 
-from sklearn.inspection import plot_partial_dependence
+from sklearn.inspection import partial_dependence
 from matplotlib import pyplot as plt
 from mpl_toolkits import mplot3d
 
@@ -165,39 +165,46 @@ def plot_active_learning_phase_diagrams(exp, k = [0, 1, 4, 7, 10], figsize=None,
     axs[0, 0].legend(handles=[sc_tr])
     return fig, axs
 
-def plot_model_individual_partial_dependency(est, X, features, num_importance, ax=None, n_jobs=12):
+def plot_feature_partial_dependency(est, X, feature, ax=None):
     ax = plt.gca() if ax is None else ax
-    common_params = {
-        "n_jobs": n_jobs,
-    }
-    plot_partial_dependence(est, 
-                            features=features[:num_importance], 
+    values_dic = partial_dependence(est, 
+                            features=feature, 
                             X=X,
-                            ax=ax,
                             kind = 'average',
-                            **common_params)
+                            percentiles=(0, 1), 
+                            grid_resolution=100)
+    x_axis, y_axis = values_dic['values'][0], values_dic['average'][0]
+    ax.plot(x_axis, y_axis)
+    ax.set_xlim(x_axis.min(), x_axis.max())
+    return y_axis.min(), y_axis.max()
 
 def estimator_feature_importance(est, X):
     feature_importance = np.array(est.feature_importances_)
     sorted_idx = feature_importance.argsort()
     sorted_feature = list(X.columns[sorted_idx])[::-1]
     importance_scores = feature_importance[sorted_idx][::-1]
-    return sorted_feature, importance_scores
+    return [sorted_feature, importance_scores]
 
-def plot_model_partial_dependency(est, X, num_importance, nrow=3, figsize=(12, 12), sharey='row', n_jobs=12):
+def plot_model_partial_dependency(est, X, num_importance, unit_comp, nrow=3, figsize=(12, 6), sharey='row'):
     fig, axs = plt.subplots(ncols=num_importance, nrows=nrow, figsize=figsize, sharey=sharey, tight_layout=True)
     for j in range(3):
         col_indx = -4 + j
         sorted_feature, importance_scores = estimator_feature_importance(est[j], X)
-        plot_model_individual_partial_dependency(est = est[j],
-                                                X=X.iloc[:, :col_indx],
-                                                features=sorted_feature,
-                                                num_importance = num_importance,
-                                                ax=axs[j, :],
-                                                n_jobs = n_jobs)
+        y_values = []
+        for k in range(num_importance):
+            y_ax = plot_feature_partial_dependency(est = est[j],
+                                                    X=X.iloc[:, :col_indx],
+                                                    feature=sorted_feature[k],
+                                                    ax=axs[j, k])
+            y_values += y_ax
+        if sharey != 'none':
+            axs[j, 0].set_ylim(min(y_values)-0.01, max(y_values)+0.01)
+            for k in range(1, num_importance):
+                axs[j, k].sharey(axs[j,0])
+
         for i in range(num_importance):
-            text = sorted_feature[i] + ': ' + str(round(importance_scores[i], 4))
-            axs[j, i].text(0.5, 0.95, text, horizontalalignment='center', verticalalignment='center', transform=axs[j, i].transAxes)
+            text = sorted_feature[i] + ': ' + str(round(importance_scores[i], 4)) + '\n' + unit_comp[sorted_feature[i]]
+            axs[j, i].text(0.5, 0.85, text, horizontalalignment='center', verticalalignment='center', transform=axs[j, i].transAxes)
             axs[j, i].set_xlabel(None)
             axs[j, i].set_ylabel(None)
     axs[0,0].set_ylabel('Sphere')
