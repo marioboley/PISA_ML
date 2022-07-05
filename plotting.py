@@ -176,6 +176,7 @@ def plot_feature_partial_dependency(est, X, feature, ax=None):
     x_axis, y_axis = values_dic['values'][0], values_dic['average'][0]
     ax.plot(x_axis, y_axis)
     ax.set_xlim(x_axis.min(), x_axis.max())
+    if x_axis.max() - x_axis.min() > 1000: ax.set_xscale('log')
     return y_axis.min(), y_axis.max()
 
 def estimator_feature_importance(est, X):
@@ -203,7 +204,9 @@ def plot_model_partial_dependency(est, X, num_importance, unit_comp, nrow=3, fig
                 axs[j, k].sharey(axs[j,0])
 
         for i in range(num_importance):
-            text = sorted_feature[i] + ': ' + str(round(importance_scores[i], 4)) + '\n' + unit_comp[sorted_feature[i]]
+            text = sorted_feature[i] + ': ' + str(round(importance_scores[i], 4)) 
+            add_unit = unit_comp[sorted_feature[i]]
+            text = text if add_unit == 'n/a' else text + '\n' + '[' + add_unit + ']'
             axs[j, i].text(0.5, 0.85, text, horizontalalignment='center', verticalalignment='center', transform=axs[j, i].transAxes)
             axs[j, i].set_xlabel(None)
             axs[j, i].set_ylabel(None)
