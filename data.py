@@ -61,7 +61,55 @@ predictors = ['clogp_corona',
               'ph',
               'salt',
               'charged',
-              'temp'] 
+              'temp']
+
+abbrev_predictors = ['clogp_cna',
+              'mw_cna',
+              'apol_cna',
+              'mv_cna',
+              'psa_cna',
+              'dp_cna',
+              'mw_tot_cna',
+              'mv_tot_cna',
+              'clogp_cre',
+              'mw_cre',
+              'apol_cre',
+              'mv_cre',
+              'psa_cre',
+              'dp_cre',
+              'mw_tot_cre',
+              'mv_tot_cre',
+              'mass_ratio',
+              'vol_ratio',
+              'conc',
+              'ph',
+              'salt',
+              'charged',
+              'temp']
+
+unit = ['n/a',
+        'g/mol',
+        '$C^2$m/N',
+        '$m^3$/mol',
+        '$A^2$/molecule',
+        'count',
+        'g/mol',
+        '$m^3$/mol',
+        'n/a',
+        'g/mol',
+        '$C^2$m/N',
+        '$m^3$/mol',
+        '$\AA^2$/molecule',
+        'count',
+        'g/mol',
+        '$m^3$/mol',
+        'n/a',
+        'n/a',
+        'wt%',
+        'n/a',
+        'M',
+        'n/a',
+        '$\circ$c']
 
 targets = ['sphere',
            'worm',
@@ -71,6 +119,7 @@ targets = ['sphere',
 prev_comp_id = -1
 comp_id = {}
 id_comp = {}
+unit_comp = dict(zip(abbrev_predictors + targets, unit + ['n/a', 'n/a', 'n/a', 'n/a']))
 
 def get_comp_id(x):
     global prev_comp_id, comp_id, id_comp
@@ -130,6 +179,7 @@ selected_columns = diff(polymers.columns, core_comp + corona_comp + targets + ['
  'First author', 'cophases', 'no_assem', 'precipitate', 'initiator'])
 x = pd.get_dummies(polymers.filter(predictors + core_comp + corona_comp, axis=1))
 x1 = pd.get_dummies(polymers.filter(predictors, axis=1))
+abbrev_x1 = x1.rename(columns= dict(zip(predictors, abbrev_predictors)))
 x2 = pd.get_dummies(polymers.filter(selected_columns, axis=1))
 y = polymers.filter(targets, axis=1)
 
