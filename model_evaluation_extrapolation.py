@@ -13,7 +13,7 @@ full_names = ['Lr_pcc', 'GAM_pcc','RuFit_pcc', 'RF_pcc']
 
 extrapolation = ExtrapolationExperiment(full_estimators, 
                             full_names,
-                            GroupKFoldSpecial(len(set(data.comp_ids)), size=20),
+                            GroupKFoldSpecial(len(set(data.comp_ids)), size=22),
                             data.x1, data.y.replace(-1.0, 0.0), groups=data.comp_ids.array,
                             evaluators=[hamming_loss, error, NegLogLikelihoodEvaluator(base=2),
                             GroupDescription(data.comp_descr, 'composition')],
