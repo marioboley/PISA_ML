@@ -165,52 +165,6 @@ def plot_active_learning_phase_diagrams(exp, k = [0, 1, 4, 7, 10], figsize=None,
     axs[0, 0].legend(handles=[sc_tr])
     return fig, axs
 
-def plot_joint_active_learning_phase_diagrams(exp_lst, y_label_names, k_lst, figsize=None, resolution=100, sharey='row', verbose=True):
-    fig, axs = plt.subplots(ncols=len(k_lst[0]), nrows=2*len(exp_lst), figsize=figsize, sharey=sharey, tight_layout=True)
-
-    for m in range(len(exp_lst)):
-        exp = exp_lst[m]
-        _id = 2*m
-        k = k_lst[m]
-        xx1, xx2, grid_points = x_grid_data_around_sample(exp.x_test[0], 'conc', 'dp_core', resolution=resolution)
-
-        for j in range(len(k)):
-            if verbose:
-                print('.', end='')
-            yy_hat = exp.fits[k[j]].predict_proba(grid_points)
-            plot_marginal_morphology_contours(xx1, xx2, yy_hat, ax=axs[_id, j])
-            scatter_phases(exp.y_test[0], exp.x_test[0]['conc'], exp.x_test[0]['dp_core'], ax=axs[_id, j])
-
-            HH = entropy(yy_hat, axis=1).reshape(xx1.shape)
-            entropy_cp = axs[_id+1, j].contourf(xx1, xx2, HH, levels=100, cmap='YlOrBr', vmin=0, vmax=2)
-            # plt.colorbar(entropy_cp, ax=axs[1, j])
-        if verbose:
-            print()
-
-        for i in range(1, len(k)):
-            axs[_id, i].scatter(exp.x_train[k[i]][-k[i]:]['conc'], exp.x_train[k[i]][-k[i]:]['dp_core'], **SCATTER_STYLE_TRAINING)
-            scatter_phases(exp.y_train[k[i]][-k[i]:], exp.x_train[k[i]][-k[i]:]['conc'], exp.x_train[k[i]][-k[i]:]['dp_core'], ax=axs[_id+1, i])
-
-        for j in range(len(k)):
-            axs[_id, j].set_title(f'$m={k[j]}$ (err ${exp.results_.iloc[k[j]]["full_test_error"]: .2f}$)')
-            # axs[_id+1, j].set_xlabel('conc')
-
-        axs[_id, 0].set_ylabel('Core DP')
-        axs[_id+1, 0].set_ylabel('Core DP')
-
-        axs[_id+1, 0].scatter([], [], **SCATTER_STYLE_SPHERE)
-        axs[_id+1, 0].scatter([], [], **SCATTER_STYLE_WORM)
-        axs[_id+1, 0].scatter([], [], **SCATTER_STYLE_VESICLE)
-        axs[_id+1, 0].legend()
-
-        sc_tr = axs[_id, 0].scatter([], [], **SCATTER_STYLE_TRAINING)
-        axs[_id, 0].legend(handles=[sc_tr])
-
-        axs[_id,0].set_ylabel(y_label_names[m] + '(Core DP)')
-        axs[_id+1,0].set_ylabel(y_label_names[m] + '(Core DP)')
-    fig.supxlabel('Copolymer concentration (wt%)')
-    return fig, axs
-
 def plot_feature_partial_dependency(est, X, feature, ax=None):
     ax = plt.gca() if ax is None else ax
     values_dic = partial_dependence(est, 
