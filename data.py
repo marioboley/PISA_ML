@@ -173,21 +173,13 @@ def diff(lst1, lst2):
 
 polymers = pd.read_csv(DATAFILE, index_col=0)
 polymers = polymers.reset_index(drop=True) # add this line to normalized dataframe
-
-# remove non-assembly points
-y = polymers.filter(targets, axis=1)
-indx = y[(y.sphere == 0) & (y.worm == 0) & (y.vesicle == 0)& (y.other == 0)].index
-polymers = polymers.iloc[~polymers.index.isin(indx)]
-polymers = polymers.reset_index(drop=True) # add this line to normalized dataframe
-
-# polymers[targets] = polymers[targets].replace(0, -1) # Comment this line to not normalize
 comp_ids = polymers.loc[:, corona_comp+core_comp].apply(get_comp_id, axis = 1)
 
 selected_columns = diff(polymers.columns, core_comp + corona_comp + targets + ['Publication DOI',
  'First author', 'cophases', 'no_assem', 'precipitate', 'initiator'])
 x = pd.get_dummies(polymers.filter(predictors + core_comp + corona_comp, axis=1))
 x1 = pd.get_dummies(polymers.filter(predictors, axis=1))
-abbrev_x1 = x1.rename(columns= dict(zip(predictors, abbrev_predictors)))
+abbrev_x1 = x1.rename(columns= dict(zip(predictors, abbrev_predictors))) # add abrevation
 x2 = pd.get_dummies(polymers.filter(selected_columns, axis=1))
 y = polymers.filter(targets, axis=1)
 
