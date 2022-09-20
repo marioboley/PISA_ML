@@ -1,6 +1,7 @@
-numpy==1.19.1
-matplotlib==3.0.3
-pandas==1.2.0
-scikit-learn==1.1.1
-pygam==0.8.0
-interpret==0.2.7
+numpy>=1.19.1
+matplotlib>=3.0.3
+pandas>=1.2.0
+scikit-learn>=1.1.1
+interpret>=0.2.7
+realkd>=0.2.1
+rulefit>=0.3.1

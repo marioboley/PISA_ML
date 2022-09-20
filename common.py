@@ -10,7 +10,3 @@ import numpy as np
 PROJECT_ROOT_DIR = "."
 DATAPATH = os.path.join(PROJECT_ROOT_DIR, "data")
 OUTPUTPATH = os.path.join(PROJECT_ROOT_DIR, "output")
-
-def set_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
