@@ -7,7 +7,6 @@ from common import OUTPUTPATH
 from modules.experiments import ExtrapolationExperiment, GroupKFoldSpecial, hamming_loss, GroupDescription, error, NegLogLikelihoodEvaluator
 from models import linear_pcc, gam_pcc, random_forest_pcc, rule_fit_pcc
 
-STATE = np.random.RandomState(seed=1000)
 full_estimators = [linear_pcc, gam_pcc, rule_fit_pcc, random_forest_pcc]
 full_names = ['Lr_pcc', 'GAM_pcc','RuFit_pcc', 'RF_pcc']
 

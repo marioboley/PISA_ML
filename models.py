@@ -8,10 +8,9 @@ from sklearn.linear_model import LogisticRegressionCV
 from modules.rules import RuleFitWrapperCV
 from interpret.glassbox import ExplainableBoostingClassifier
 import numpy as np
-# from common import set_seed
 
 seeds = 1000
-STATE = np.random.RandomState(seed=seeds)
+# STATE = np.random.RandomState(seed=seeds)
 
 MAX_ITER = 30000
 # logistic models with l2
@@ -28,8 +27,8 @@ gam_base = ExplainableBoostingClassifier(interactions=0,random_state=seeds)
 gam_pcc = ProbabilisticClassifierChain(gam_base)
 
 # rule fit models
-rule_fit_base = RuleFitWrapperCV(Cs = [1, 2, 4, 8, 16, 32], cv=10, rank='median', random_state=seeds, tree_generator=RandomForestClassifier(random_state=seeds, min_samples_leaf=1, n_estimators=200), 
-                                exp_rand_tree_size=False)
+rule_fit_base = RuleFitWrapperCV(Cs = [1, 2, 4, 8, 16, 32], cv=10, rank='median', random_state=seeds, 
+                                tree_generator=random_forest_base, exp_rand_tree_size=False)
 rule_fit_pcc = ProbabilisticClassifierChain(rule_fit_base)
 
 
