@@ -8,7 +8,7 @@ from modules.experiments import ExtrapolationExperiment, GroupKFoldSpecial, hamm
 from models import linear_pcc, gam_pcc, random_forest_pcc, rule_fit_pcc
 
 full_estimators = [linear_pcc, gam_pcc, rule_fit_pcc, random_forest_pcc]
-full_names = ['Lr_pcc', 'GAM_pcc','RuFit_pcc', 'RF_pcc']
+full_names = ['LR', 'GAM','RuleFit', 'RF']
 
 extrapolation = ExtrapolationExperiment(full_estimators, 
                             full_names,

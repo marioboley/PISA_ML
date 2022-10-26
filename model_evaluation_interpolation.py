@@ -10,7 +10,7 @@ from modules.experiments import Experiment, KFold, hamming_loss, error, NegLogLi
 
 seed=1000
 full_estimators = [linear_pcc, gam_pcc, rule_fit_pcc, random_forest_pcc]
-full_names = ['Lr_pcc', 'GAM_pcc', 'RuFit_pcc', 'RF_pcc']
+full_names = ['LR', 'GAM','RuleFit', 'RF']
 
 interpolation = Experiment(full_estimators, 
                             full_names,
