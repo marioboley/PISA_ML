@@ -6,3 +6,6 @@ To replicate the experiments, you have to have Python of version at least 3.7 in
 ```
 pip3 install -r requirements
 ```
+
+Note:
+RuleFit rules are not stable because author use set() to add rules. To keep rulefit stable, you need to replace original `rulefit.py` with `rulefit.py` in our modules.
