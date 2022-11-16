@@ -127,9 +127,10 @@ SCATTER_STYLE_TRAINING = {
     'label' : 'training'
 }
 
-def plot_active_learning_phase_diagrams(exp, k = [0, 1, 4, 7, 10], figsize=None, resolution=100, verbose=True):
-    figsize = (len(k)*12/5, 5.5) if figsize is None else figsize
-    fig, axs = plt.subplots(2, len(k), figsize=figsize, sharex=True, sharey=True, tight_layout=True)
+def plot_active_learning_phase_diagrams(exp, k = [0, 1, 4, 7, 10], fig=None, resolution=100, inline_titles=False, verbose=True):
+    fig = plt.figure(figsize=(len(k)*12/5, 5.5), constrained_layout=True, tight_layout=True) if fig is None else fig
+    # figsize = (len(k)*12/5, 5.5) if figsize is None else figsize
+    axs = fig.subplots(2, len(k), sharex=True, sharey=True)
     xx1, xx2, grid_points = x_grid_data_around_sample(exp.x_test[0], 'conc', 'dp_core', resolution=resolution)
 
     for j in range(len(k)):
@@ -150,7 +151,11 @@ def plot_active_learning_phase_diagrams(exp, k = [0, 1, 4, 7, 10], figsize=None,
         scatter_phases(exp.y_train[k[i]][-k[i]:], exp.x_train[k[i]][-k[i]:]['conc'], exp.x_train[k[i]][-k[i]:]['dp_core'], ax=axs[1, i])
 
     for j in range(len(k)):
-        axs[0, j].set_title(f'$m={k[j]}$ (err ${exp.results_.iloc[k[j]]["full_test_error"]: .2f}$)')
+        subplot_title = f'$m={k[j]}$ (err ${exp.results_.iloc[k[j]]["full_test_error"]: .2f}$)'
+        if inline_titles:
+            axs[1, j].text(0.5, 0.05, subplot_title, ha='center', va='bottom', transform=axs[1, j].transAxes)
+        else:
+            axs[0, j].set_title(subplot_title)
         axs[1, j].set_xlabel('conc')
 
     axs[0, 0].set_ylabel('dp_core')
