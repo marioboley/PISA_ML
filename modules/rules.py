@@ -1,4 +1,5 @@
-from realkd.patch import RuleFit
+# from realkd.patch import RuleFit
+from .rulefit import RuleFit
 from sklearn.model_selection import KFold
 import numpy as np
 import re
