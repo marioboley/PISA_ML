@@ -129,7 +129,6 @@ dmypy.json
 .pyre/
 .DS_Store
 
-# ignore modified rulefit module files
-rulefit.py
+
 # ignore bib reference files
 bin_design.csv
