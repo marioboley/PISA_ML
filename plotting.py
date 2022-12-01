@@ -1,8 +1,8 @@
 import numpy as np
 
+from modules.feature_importance import estimator_feature_importance
 from sklearn.inspection import partial_dependence
 from matplotlib import pyplot as plt
-from mpl_toolkits import mplot3d
 
 from scipy.stats import entropy
 
@@ -183,13 +183,6 @@ def plot_feature_partial_dependency(est, X, feature, ax=None):
     ax.set_xlim(x_axis.min(), x_axis.max())
     if x_axis.max() - x_axis.min() > 1000: ax.set_xscale('log')
     return y_axis.min(), y_axis.max()
-
-def estimator_feature_importance(est, X):
-    feature_importance = np.array(est.feature_importances_)
-    sorted_idx = feature_importance.argsort()
-    sorted_feature = list(X.columns[sorted_idx])[::-1]
-    importance_scores = feature_importance[sorted_idx][::-1]
-    return [sorted_feature, importance_scores]
 
 def plot_model_partial_dependency(est, X, num_importance, unit_comp, nrow=3, figsize=(12, 6), sharey='row'):
     fig, axs = plt.subplots(ncols=num_importance, nrows=nrow, figsize=figsize, sharey=sharey, tight_layout=True)
