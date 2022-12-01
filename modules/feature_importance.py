@@ -12,7 +12,7 @@ def estimator_feature_importance(est, X):
 
 
 
-def individual_importance_dataframe(est, X, y, scoring='neg_log_loss', num_importance=None, n_repeats=100, seed=None):
+def linear_permutation_importance(est, X, y, scoring='neg_log_loss', num_importance=None, n_repeats=100, seed=None):
     """
     This algorithm use linear estimators and get the importance variables where p < 0.05
     To easy comparison, we set importance score: 1- p
@@ -27,13 +27,15 @@ def individual_importance_dataframe(est, X, y, scoring='neg_log_loss', num_impor
     df = pd.DataFrame({'variables': important_variables[:num_importance], 'coef': coef[:num_importance], 'importance': importance_scores[:num_importance]})
     return df
 
-def linear_importance_rule(est, X, y, scoring='neg_log_loss', num_importance=None, n_repeats=100, seed=None):
+def linear_friedman_importance(est, X, num_importance=None):
+    """This function is to estimate friedman importance scores for linear models in binary classification
+    """
     coef = est.coef_[0]
     importance_scores = abs(coef* np.std(X))
     df = pd.DataFrame({'variables': X.columns.tolist(), 'coef': coef, 'importance': importance_scores})
     df = df.sort_values(by='importance', ascending=False)
     df = df.reset_index(drop=True)
-    return df
+    return df[:num_importance] if num_importance else df
 
 def linear_importance_dataframe(est, X, Y, scoring = 'neg_log_loss', num_importance=None, n_repeats=100, seed=None, typ='permut'):
     """
@@ -47,9 +49,9 @@ def linear_importance_dataframe(est, X, Y, scoring = 'neg_log_loss', num_importa
         estimator, X, y = est[i], data1.iloc[:, :col_indx], Y.iloc[:, i]
 
         if typ == 'permut':
-            temp_df = individual_importance_dataframe(est=estimator, X=X, y=y, scoring=scoring, num_importance=num_importance, n_repeats=n_repeats, seed=seed)
-        else:
-            temp_df = linear_importance_rule(est=estimator, X=X, y=y, scoring=scoring, num_importance=num_importance, n_repeats=n_repeats, seed=seed)
+            temp_df = linear_permutation_importance(est=estimator, X=X, y=y, scoring=scoring, num_importance=num_importance, n_repeats=n_repeats, seed=seed)
+        elif typ == 'friedman':
+            temp_df = linear_friedman_importance(est=estimator, X=X, num_importance=num_importance)
         if not cnt: 
             df = temp_df
             cnt = 1
