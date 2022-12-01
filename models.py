@@ -7,10 +7,8 @@ from modules.multilabel import ProbabilisticClassifierChain, BinaryRelevanceClas
 from sklearn.linear_model import LogisticRegressionCV
 from modules.rules import RuleFitWrapperCV
 from interpret.glassbox import ExplainableBoostingClassifier
-import numpy as np
 
 seeds = 1000
-# STATE = np.random.RandomState(seed=seeds)
 
 MAX_ITER = 30000
 # logistic models with l2
