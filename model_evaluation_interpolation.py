@@ -1,12 +1,11 @@
 import os
 import pickle
-import numpy as np
 
-from common import OUTPUTPATH
+from common import OUTPUTPATH, ignore_warning
 import data
 from models import linear_pcc, gam_pcc, rule_fit_pcc, random_forest_pcc
 from modules.experiments import Experiment, KFold, hamming_loss, error, NegLogLikelihoodEvaluator
-
+ignore_warning()
 
 seed=1000
 full_estimators = [linear_pcc, gam_pcc, rule_fit_pcc, random_forest_pcc]

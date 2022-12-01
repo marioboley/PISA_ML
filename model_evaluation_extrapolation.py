@@ -1,11 +1,11 @@
 import os
 import pickle
-import numpy as np
 
 import data
-from common import OUTPUTPATH
+from common import OUTPUTPATH, ignore_warning
 from modules.experiments import ExtrapolationExperiment, GroupKFoldSpecial, hamming_loss, GroupDescription, error, NegLogLikelihoodEvaluator
 from models import linear_pcc, gam_pcc, random_forest_pcc, rule_fit_pcc
+ignore_warning()
 
 full_estimators = [linear_pcc, gam_pcc, rule_fit_pcc, random_forest_pcc]
 full_names = ['LR', 'GAM','RuleFit', 'RF']
