@@ -1,6 +1,6 @@
 # Machine Learning Models for Phase Prediction in Polymer-Induced Self Assembly
 
-Interpretable machine learning models for predicting the morhphological outcomes of polymerization-induced self-assembles.
+Interpretable machine learning models for predicting the morphological outcomes of polymerization-induced self-assembly experiments inlcuding code for data handling, model evaluation, and phase diagram calculation.
 
 ## Publication
 
